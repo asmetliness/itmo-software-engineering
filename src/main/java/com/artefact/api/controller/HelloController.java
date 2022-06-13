@@ -20,23 +20,8 @@ public class HelloController {
     @GetMapping("/test")
     public String sayHello() {
 
-        Role role = new Role();
-        role.setName("tester");
 
-        roleRepository.save(role);
-
-        Role findResult = roleRepository.findByName("tester");
-
-        User user = new User();
-        user.setFirstName("firstName");
-        user.setLogin("login");
-        user.setMiddleName("test");
-        user.setRoleId(findResult.getId());
-        userRepository.save(user);
-
-
-
-        User test = userRepository.getByLogin("login");
+        User test = userRepository.getByLogin("logi222n");
         return "Hello!";
 
     }

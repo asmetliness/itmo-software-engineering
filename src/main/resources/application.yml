@@ -1,12 +1,12 @@
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/artifact
+    url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact
     username: artifact
     password: artifact
 
 flyway:
-  url: jdbc:postgresql://localhost:5432/artifact
+  url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact
   user: artifact
   password: artifact
   enabled: true

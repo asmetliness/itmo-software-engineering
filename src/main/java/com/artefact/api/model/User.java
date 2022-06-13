@@ -1,5 +1,7 @@
 package com.artefact.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -12,6 +14,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column
+    private String email;
+
     @Column(name = "first_name")
     private String firstName;
     @Column(name="last_name")
@@ -20,9 +25,9 @@ public class User {
     private String middleName;
     @Column(name="role_id")
     private Long roleId;
-    @Column
-    private String login;
+
     @Column(name = "password_hash")
+    @JsonIgnore
     private String passwordHash;
 
 }

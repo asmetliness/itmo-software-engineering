@@ -13,6 +13,6 @@ CREATE TABLE users
     middle_name TEXT,
     role_id BIGSERIAL REFERENCES roles (id),
 
-    login Text,
+    email Text,
     password_hash Text
 );

@@ -21,7 +21,6 @@ public class HelloController {
     public String sayHello() {
 
 
-        User test = userRepository.getByLogin("logi222n");
         return "Hello!";
 
     }

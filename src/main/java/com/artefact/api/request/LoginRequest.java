@@ -1,10 +1,13 @@
 package com.artefact.api.request;
 
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@ToString
 public class LoginRequest {
 
-    private String login;
+    private String email;
     private String password;
 }

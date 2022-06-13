@@ -11,6 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public interface UserRepository extends PagingAndSortingRepository<User, Long> {
 
-    @Query("Select u from User u where u.login = :login")
-    User getByLogin(@Param("login") String login);
+    @Query("Select u from User u where u.email = :email")
+    User findByEmail(@Param("email") String email);
+
+    @Query("Select u from User u where u.email = :email AND u.passwordHash = :password")
+    User findByCredentials(@Param("email") String email, @Param("password") String password);
+
 }

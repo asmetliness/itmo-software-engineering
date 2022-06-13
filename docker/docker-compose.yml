@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+  postgresql:
+    image: postgres:9.6
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=artifact
+      - POSTGRES_PASSWORD=artifact
+      - POSTGRES_DB=artifact
+
+volumes:
+  db_data:
+    driver: local

@@ -5,7 +5,6 @@ spring:
     username: artifact
     password: artifact
 
-
 flyway:
   url: jdbc:postgresql://localhost:5432/artifact
   user: artifact

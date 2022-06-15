@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 public class UserController {
 
     @Autowired
     private UserRepository userRepository;
 
-    @GetMapping("/test222")
+    @GetMapping()
     public ResponseEntity<User> getUserDetails(){
 
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

@@ -16,3 +16,8 @@ CREATE TABLE users
     email Text,
     password_hash Text
 );
+
+
+INSERT INTO ROLES (name)
+VALUES
+('stalker'), ('client'), ('huckster'), ('informer');

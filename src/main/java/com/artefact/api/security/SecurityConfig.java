@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .and()
                 .authorizeHttpRequests()
                 .antMatchers("/api/auth/**").permitAll()
+                .antMatchers("/api/roles/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .userDetailsService(userDetailService)

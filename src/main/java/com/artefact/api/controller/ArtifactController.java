@@ -1,7 +1,9 @@
 package com.artefact.api.controller;
 
+import com.artefact.api.model.Artifact;
 import com.artefact.api.model.Role;
 import com.artefact.api.model.User;
+import com.artefact.api.repository.ArtifactRepository;
 import com.artefact.api.repository.RoleRepository;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.response.UserResponse;
@@ -14,22 +16,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/api/users")
-public class UserController {
+@RequestMapping("/api/artifacts")
+public class ArtifactController {
 
     @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
+    private ArtifactRepository artifactRepository;
 
 
-    @GetMapping("/current")
-    public ResponseEntity<UserResponse> getUserDetails(){
+    @GetMapping("")
+    public ResponseEntity<Iterable<Artifact>> getArtifacts(){
 
-        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        User user = userRepository.findById(Long.parseLong(userId)).get();
-        Role role = roleRepository.findById(user.getRoleId()).get();
-        return new ResponseEntity<>(new UserResponse(user, role), HttpStatus.OK);
+        return new ResponseEntity<>(artifactRepository.findAll(), HttpStatus.OK);
     }
 }

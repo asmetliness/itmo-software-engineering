@@ -41,5 +41,22 @@ public class UserController {
         return new ResponseEntity<>(new UserResponse(user, role), HttpStatus.OK);
     }
 
+    @GetMapping("/stalkers")
+    public ResponseEntity<Iterable<User>> getAllStalkers() {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        User user = userRepository.findById(Long.parseLong(userId)).get();
+        Role role = roleRepository.findById(user.getRoleId()).get();
+        if(!role.getName().equals(RoleNames.Huckster)) {
+            return new ResponseEntity<>(new ArrayList<User>(), HttpStatus.OK);
+        }
+
+        Role stalkerRole = roleRepository.findByName(RoleNames.Stalker);
+
+        Iterable<User> users = userRepository.findByRole(stalkerRole.getId());
+
+        return new ResponseEntity<>(users, HttpStatus.OK);
+    }
+
 
 }

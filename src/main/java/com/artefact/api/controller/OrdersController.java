@@ -5,6 +5,7 @@ import com.artefact.api.consts.RoleNames;
 import com.artefact.api.model.*;
 import com.artefact.api.repository.*;
 import com.artefact.api.request.CreateOrderRequest;
+import com.artefact.api.request.SuggestOrderRequest;
 import com.artefact.api.response.OrderResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,70 @@ public class OrdersController {
 
     @Autowired
     private ArtifactRepository artifactRepository;
+
+
+    @PostMapping("/suggest")
+    public ResponseEntity<Object> SuggestOrder(@RequestBody SuggestOrderRequest request) {
+        String userId = (String) getContext().getAuthentication().getPrincipal();
+
+
+        Optional<Order> order = orderRepository.findById(request.getOrderId());
+
+        Order orderVal = order.get();
+        orderVal.setSuggestedUserId(request.getStalkerId());
+
+        return GetOrderResponse(request.getOrderId());
+    }
+
+    @PostMapping("/decline/{id}")
+    public ResponseEntity<Object> DeclineOrder(@PathVariable("id") long id) {
+        String userId = (String) getContext().getAuthentication().getPrincipal();
+
+        Optional<User> user = userRepository.findById(Long.parseLong(userId));
+        Optional<Role> role = roleRepository.findById(user.get().getRoleId());
+
+        Optional<Order> order = orderRepository.findById(id);
+
+        if(!order.isPresent()) {
+            return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
+        }
+        Order orderVal = order.get();
+        if(role.get().getName().equals(RoleNames.Huckster)) {
+            orderVal.setAcceptedUserId(null);
+            orderVal.setStatusId(OrderStatusIds.NewOrder);
+        }
+        if(role.get().getName().equals(RoleNames.Stalker)) {
+            orderVal.setAssignedUserId(null);
+            orderVal.setSuggestedUserId(null);
+            orderVal.setStatusId(OrderStatusIds.AcceptedByHuckster);
+        }
+        orderRepository.save(orderVal);
+        return GetOrderResponse(id);
+    }
+    @PostMapping("/accept/{id}")
+    public ResponseEntity<Object> AcceptOrder(@PathVariable("id") long id) {
+        String userId = (String) getContext().getAuthentication().getPrincipal();
+
+        Optional<User> user = userRepository.findById(Long.parseLong(userId));
+        Optional<Role> role = roleRepository.findById(user.get().getRoleId());
+
+        Optional<Order> order = orderRepository.findById(id);
+
+        if(!order.isPresent()) {
+            return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
+        }
+        Order orderVal = order.get();
+        if(role.get().getName().equals(RoleNames.Huckster)) {
+            orderVal.setAcceptedUserId(user.get().getId());
+            orderVal.setStatusId(OrderStatusIds.AcceptedByHuckster);
+        }
+        if(role.get().getName().equals(RoleNames.Stalker)) {
+            orderVal.setAssignedUserId(user.get().getId());
+            orderVal.setStatusId(OrderStatusIds.AcceptedByStalker);
+        }
+        orderRepository.save(orderVal);
+        return GetOrderResponse(id);
+    }
 
     @PostMapping
     public ResponseEntity<Object> CreateOrder(@RequestBody CreateOrderRequest request) {

@@ -10,15 +10,15 @@ services:
       - POSTGRES_USER=artifact
       - POSTGRES_PASSWORD=artifact
       - POSTGRES_DB=artifact
-
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - POSTGRESQL_DB_HOST=postgresql
+#
+#  api:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - POSTGRESQL_DB_HOST=postgresql
 
 volumes:
   db_data:

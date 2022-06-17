@@ -1,13 +1,11 @@
 package com.artefact.api.security;
 
 
-import com.artefact.api.repository.UserRepository;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -18,10 +16,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-
 @Component
 public class JwtFilter extends OncePerRequestFilter {
-
     @Autowired
     private JwtUserDetailService userDetailsService;
     @Autowired
@@ -36,13 +32,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-
-        if(authHeader != null && authHeader.startsWith("Bearer ")){
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String jwt = authHeader.substring(7);
-            if(jwt.isEmpty()){
+            if (jwt.isEmpty()) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JWT Token in Bearer Header");
-            }else {
-                try{
+            } else {
+                try {
                     Long userID = jwtUtil.validateTokenAndRetrieveSubject(jwt);
                     UserDetails userDetails = userDetailsService.loadUserByUsername(userID.toString());
 
@@ -52,10 +47,10 @@ public class JwtFilter extends OncePerRequestFilter {
                                     userDetails.getPassword(),
                                     userDetails.getAuthorities());
 
-                    if(SecurityContextHolder.getContext().getAuthentication() == null){
+                    if (SecurityContextHolder.getContext().getAuthentication() == null) {
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }
-                }catch(JWTVerificationException | UsernameNotFoundException exc){
+                } catch (JWTVerificationException | UsernameNotFoundException exc) {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.getWriter().write("Invalid JWT Token");
                     response.getWriter().flush();

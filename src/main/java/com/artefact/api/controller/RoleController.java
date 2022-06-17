@@ -13,17 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/api/roles")
 public class RoleController {
-
     @Autowired
     private RoleRepository roleRepository;
 
-
     @GetMapping
     public ResponseEntity<Iterable<Role>> getAllRoles() {
-
         Iterable<Role> roles = roleRepository.findAll();
-
         return new ResponseEntity<>(roles, HttpStatus.OK);
     }
-
 }

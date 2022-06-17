@@ -13,7 +13,6 @@ import java.util.Date;
 @AllArgsConstructor
 @ToString
 public class SuggestOrderRequest {
-
     private long orderId;
     private long stalkerId;
 }

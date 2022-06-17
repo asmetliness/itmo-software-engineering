@@ -14,7 +14,6 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
-
     //TODO transfer to configuration
     private String secret = "secret";
 
@@ -29,7 +28,7 @@ public class JwtUtil {
                 .sign(Algorithm.HMAC256(secret));
     }
 
-    public Long validateTokenAndRetrieveSubject(String token)throws JWTVerificationException {
+    public Long validateTokenAndRetrieveSubject(String token) throws JWTVerificationException {
         JWTVerifier verifier = JWT.require(Algorithm.HMAC256(secret))
                 .withSubject("User details")
                 .withIssuer("artifact")
@@ -37,6 +36,4 @@ public class JwtUtil {
         DecodedJWT jwt = verifier.verify(token);
         return jwt.getClaim("userId").asLong();
     }
-
-
 }

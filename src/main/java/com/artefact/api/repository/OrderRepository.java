@@ -12,8 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @Transactional
 public interface OrderRepository extends PagingAndSortingRepository<Order, Long> {
-
-
     @Query("Select o from Order o where o.createdUserId = :userId")
     Iterable<Order> findByCreatedUserId(@Param("userId") long userId);
 
@@ -23,7 +21,7 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, Long>
     @Query("Select o from Order o where o.acceptedUserId = :userId")
     Iterable<Order> findByAcceptedUserId(@Param("userId") long userId);
 
-    @Query("Select o from Order o where o.statusId = :statusId" )
+    @Query("Select o from Order o where o.statusId = :statusId")
     Iterable<Order> findOrderByStatus(@Param("statusId") long statusId);
 
     @Query("Select o from Order o where o.suggestedUserId = :userId")

@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @Transactional
 public interface UserRepository extends PagingAndSortingRepository<User, Long> {
-
     @Query("Select u from User u where u.email = :email")
     User findByEmail(@Param("email") String email);
 
@@ -18,5 +17,5 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
     User findByCredentials(@Param("email") String email, @Param("password") String password);
 
     @Query("Select u from User u where u.roleId = :id")
-    Iterable<User> findByRole(@Param("id")Long id);
+    Iterable<User> findByRole(@Param("id") Long id);
 }

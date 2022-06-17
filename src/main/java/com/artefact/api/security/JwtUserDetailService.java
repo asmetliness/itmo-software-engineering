@@ -14,15 +14,15 @@ import java.util.Optional;
 
 @Component
 public class JwtUserDetailService implements UserDetailsService {
-
-    @Autowired private UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
 
         Optional<User> userRes = userRepository.findById(Long.parseLong(userId));
 
-        if(!userRes.isPresent())
+        if (!userRes.isPresent())
             throw new UsernameNotFoundException("Could not findUser with id = " + userId);
         User user = userRes.get();
 

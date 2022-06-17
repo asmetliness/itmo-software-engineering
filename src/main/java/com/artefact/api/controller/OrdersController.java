@@ -15,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
@@ -202,10 +203,10 @@ public class OrdersController {
         Optional<Role> role = roleRepository.findById(user.get().getRoleId());
 
         Iterable<Order> orders = null;
-        if(role.get().getName() == RoleNames.Huckster) {
+        if(Objects.equals(role.get().getName(), RoleNames.Huckster)) {
             orders = orderRepository.findOrderByStatus(OrderStatusIds.NewOrder);
         }
-        if(role.get().getName() == RoleNames.Stalker) {
+        if(Objects.equals(role.get().getName(), RoleNames.Stalker)) {
             orders = orderRepository.findSuggestedOrders(Long.parseLong(userId));
         }
 

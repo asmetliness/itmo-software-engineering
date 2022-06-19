@@ -27,24 +27,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf().disable()
-                .httpBasic().disable()
-                .cors()
-                .and()
-                .authorizeHttpRequests()
-                .antMatchers("/api/auth/**").permitAll()
-                .antMatchers("/api/roles/**").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .userDetailsService(userDetailService)
-                .exceptionHandling()
-                .authenticationEntryPoint(
-                        (request, response, authException) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
-                )
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+            .csrf().disable()
+            .httpBasic().disable()
+            .cors()
+            .and()
+            .authorizeHttpRequests()
+            .antMatchers("/api/auth/**").permitAll()
+            .antMatchers("/api/roles/**").permitAll()
+            .anyRequest().authenticated()
+            .and()
+            .userDetailsService(userDetailService)
+            .exceptionHandling()
+            .authenticationEntryPoint(
+                    (request, response, authException) ->
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+            )
+            .and()
+            .sessionManagement()
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

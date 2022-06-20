@@ -7,7 +7,6 @@ import com.artefact.api.repository.*;
 import com.artefact.api.request.CreateOrderRequest;
 import com.artefact.api.request.SuggestOrderRequest;
 import com.artefact.api.response.OrderResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,20 +22,31 @@ import static org.springframework.security.core.context.SecurityContextHolder.ge
 @Controller
 @RequestMapping("/api/orders")
 public class OrdersController {
-    @Autowired
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private OrderStatusRepository orderStatusRepository;
+    private final OrderStatusRepository orderStatusRepository;
 
-    @Autowired
-    private RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
 
-    @Autowired
-    private ArtifactRepository artifactRepository;
+    private final ArtifactRepository artifactRepository;
+
+    private final NotificationRepository notificationRepository;
+
+    public OrdersController(OrderRepository orderRepository,
+                            UserRepository userRepository,
+                            OrderStatusRepository orderStatusRepository,
+                            RoleRepository roleRepository,
+                            ArtifactRepository artifactRepository,
+                            NotificationRepository notificationRepository) {
+        this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
+        this.orderStatusRepository = orderStatusRepository;
+        this.roleRepository = roleRepository;
+        this.artifactRepository = artifactRepository;
+        this.notificationRepository = notificationRepository;
+    }
 
 
     @PostMapping("/suggest")
@@ -47,6 +57,11 @@ public class OrdersController {
 
         Order orderVal = order.get();
         orderVal.setSuggestedUserId(request.getStalkerId());
+        orderRepository.save(orderVal);
+
+        notificationRepository.save(new Notification("Вам был предложен заказ!",
+                request.getStalkerId(),
+                request.getOrderId()));
 
         return GetOrderResponse(request.getOrderId());
     }
@@ -67,11 +82,23 @@ public class OrdersController {
         if (role.get().getName().equals(RoleNames.Huckster)) {
             orderVal.setAcceptedUserId(null);
             orderVal.setStatusId(OrderStatusIds.NewOrder);
+
+            notificationRepository.save(new Notification("Ваш заказ был отклонен барыгой!",
+                    orderVal.getCreatedUserId(),
+                    orderVal.getId()));
         }
         if (role.get().getName().equals(RoleNames.Stalker)) {
             orderVal.setAssignedUserId(null);
             orderVal.setSuggestedUserId(null);
             orderVal.setStatusId(OrderStatusIds.AcceptedByHuckster);
+
+            notificationRepository.save(new Notification("Заказ был отклонен сталкером!",
+                    orderVal.getAcceptedUserId(),
+                    orderVal.getId()));
+            
+            notificationRepository.save(new Notification("Заказ был отклонен сталкером!",
+                    orderVal.getCreatedUserId(),
+                    orderVal.getId()));
         }
         orderRepository.save(orderVal);
         return GetOrderResponse(id);
@@ -93,10 +120,23 @@ public class OrdersController {
         if (role.get().getName().equals(RoleNames.Huckster)) {
             orderVal.setAcceptedUserId(user.get().getId());
             orderVal.setStatusId(OrderStatusIds.AcceptedByHuckster);
+
+            notificationRepository.save(new Notification("Заказ был принят барыгой!",
+                    orderVal.getCreatedUserId(),
+                    orderVal.getId()));
         }
         if (role.get().getName().equals(RoleNames.Stalker)) {
             orderVal.setAssignedUserId(user.get().getId());
+            orderVal.setSuggestedUserId(null);
             orderVal.setStatusId(OrderStatusIds.AcceptedByStalker);
+
+            notificationRepository.save(new Notification("Заказ был принят сталкером!",
+                    orderVal.getAcceptedUserId(),
+                    orderVal.getId()));
+
+            notificationRepository.save(new Notification("Заказ был принят сталкером!",
+                    orderVal.getCreatedUserId(),
+                    orderVal.getId()));
         }
         orderRepository.save(orderVal);
         return GetOrderResponse(id);

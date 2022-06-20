@@ -103,6 +103,7 @@ public class OrdersController {
         }
         if (role.get().getName().equals(RoleNames.Stalker)) {
             orderVal.setAssignedUserId(user.get().getId());
+            orderVal.setSuggestedUserId(null);
             orderVal.setStatusId(OrderStatusIds.AcceptedByStalker);
         }
         orderRepository.save(orderVal);

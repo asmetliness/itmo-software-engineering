@@ -23,20 +23,27 @@ import static org.springframework.security.core.context.SecurityContextHolder.ge
 @Controller
 @RequestMapping("/api/orders")
 public class OrdersController {
-    @Autowired
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private OrderStatusRepository orderStatusRepository;
+    private final OrderStatusRepository orderStatusRepository;
 
-    @Autowired
-    private RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
 
-    @Autowired
-    private ArtifactRepository artifactRepository;
+    private final ArtifactRepository artifactRepository;
+
+    public OrdersController(OrderRepository orderRepository,
+                            UserRepository userRepository,
+                            OrderStatusRepository orderStatusRepository,
+                            RoleRepository roleRepository,
+                            ArtifactRepository artifactRepository) {
+        this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
+        this.orderStatusRepository = orderStatusRepository;
+        this.roleRepository = roleRepository;
+        this.artifactRepository = artifactRepository;
+    }
 
 
     @PostMapping("/suggest")
@@ -47,7 +54,7 @@ public class OrdersController {
 
         Order orderVal = order.get();
         orderVal.setSuggestedUserId(request.getStalkerId());
-
+        orderRepository.save(orderVal);
         return GetOrderResponse(request.getOrderId());
     }
 

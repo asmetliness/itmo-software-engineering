@@ -13,10 +13,8 @@ import java.util.Date;
 @AllArgsConstructor
 @ToString
 public class CreateOrderRequest {
-
     private Long artifactId;
     private Double price;
-    @JsonFormat(pattern="dd.MM.yyyy")
+    @JsonFormat(pattern = "dd.MM.yyyy")
     private Date completionDate;
-
 }

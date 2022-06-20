@@ -22,7 +22,6 @@ import java.util.Optional;
 @Controller
 @RequestMapping("/api/users")
 public class UserController {
-
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -32,7 +31,7 @@ public class UserController {
     OrderRepository orderRepository;
 
     @GetMapping("/current")
-    public ResponseEntity<UserResponse> getUserDetails(){
+    public ResponseEntity<UserResponse> getUserDetails() {
 
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -47,7 +46,7 @@ public class UserController {
 
         User user = userRepository.findById(Long.parseLong(userId)).get();
         Role role = roleRepository.findById(user.getRoleId()).get();
-        if(!role.getName().equals(RoleNames.Huckster)) {
+        if (!role.getName().equals(RoleNames.Huckster)) {
             return new ResponseEntity<>(new ArrayList<User>(), HttpStatus.OK);
         }
 
@@ -57,6 +56,4 @@ public class UserController {
 
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
-
-
 }

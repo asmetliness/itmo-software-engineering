@@ -10,7 +10,6 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class RegisterRequest {
-
     private String email;
     private String password;
     private Long roleId;

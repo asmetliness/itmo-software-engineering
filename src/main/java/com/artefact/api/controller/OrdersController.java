@@ -15,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
@@ -22,7 +23,6 @@ import static org.springframework.security.core.context.SecurityContextHolder.ge
 @Controller
 @RequestMapping("/api/orders")
 public class OrdersController {
-
     @Autowired
     private OrderRepository orderRepository;
 
@@ -43,7 +43,6 @@ public class OrdersController {
     public ResponseEntity<Object> SuggestOrder(@RequestBody SuggestOrderRequest request) {
         String userId = (String) getContext().getAuthentication().getPrincipal();
 
-
         Optional<Order> order = orderRepository.findById(request.getOrderId());
 
         Order orderVal = order.get();
@@ -61,15 +60,15 @@ public class OrdersController {
 
         Optional<Order> order = orderRepository.findById(id);
 
-        if(!order.isPresent()) {
+        if (!order.isPresent()) {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
         Order orderVal = order.get();
-        if(role.get().getName().equals(RoleNames.Huckster)) {
+        if (role.get().getName().equals(RoleNames.Huckster)) {
             orderVal.setAcceptedUserId(null);
             orderVal.setStatusId(OrderStatusIds.NewOrder);
         }
-        if(role.get().getName().equals(RoleNames.Stalker)) {
+        if (role.get().getName().equals(RoleNames.Stalker)) {
             orderVal.setAssignedUserId(null);
             orderVal.setSuggestedUserId(null);
             orderVal.setStatusId(OrderStatusIds.AcceptedByHuckster);
@@ -77,6 +76,7 @@ public class OrdersController {
         orderRepository.save(orderVal);
         return GetOrderResponse(id);
     }
+
     @PostMapping("/accept/{id}")
     public ResponseEntity<Object> AcceptOrder(@PathVariable("id") long id) {
         String userId = (String) getContext().getAuthentication().getPrincipal();
@@ -86,15 +86,15 @@ public class OrdersController {
 
         Optional<Order> order = orderRepository.findById(id);
 
-        if(!order.isPresent()) {
+        if (!order.isPresent()) {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
         Order orderVal = order.get();
-        if(role.get().getName().equals(RoleNames.Huckster)) {
+        if (role.get().getName().equals(RoleNames.Huckster)) {
             orderVal.setAcceptedUserId(user.get().getId());
             orderVal.setStatusId(OrderStatusIds.AcceptedByHuckster);
         }
-        if(role.get().getName().equals(RoleNames.Stalker)) {
+        if (role.get().getName().equals(RoleNames.Stalker)) {
             orderVal.setAssignedUserId(user.get().getId());
             orderVal.setStatusId(OrderStatusIds.AcceptedByStalker);
         }
@@ -121,7 +121,7 @@ public class OrdersController {
     public ResponseEntity<Object> GetOrderResponse(@PathVariable("id") Long id) {
 
         OrderResponse response = GetOrder(id);
-        if(response == null) {
+        if (response == null) {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
 
@@ -138,24 +138,24 @@ public class OrdersController {
         Iterable<Order> orders = null;
         String name = role.get().getName();
 
-        if(role.get().getName().equals(RoleNames.Client)) {
+        if (role.get().getName().equals(RoleNames.Client)) {
             orders = orderRepository.findByCreatedUserId(Long.parseLong(userId));
         }
 
-        if(role.get().getName().equals(RoleNames.Stalker)) {
+        if (role.get().getName().equals(RoleNames.Stalker)) {
             orders = orderRepository.findByAssignedUserId(Long.parseLong(userId));
         }
 
-        if(role.get().getName().equals(RoleNames.Huckster)) {
+        if (role.get().getName().equals(RoleNames.Huckster)) {
             orders = orderRepository.findByAcceptedUserId(Long.parseLong(userId));
         }
 
-        if(orders == null) {
+        if (orders == null) {
             orders = new ArrayList<>();
         }
 
         ArrayList<OrderResponse> response = new ArrayList<>();
-        for(Order order: orders) {
+        for (Order order : orders) {
             response.add(GetOrder(order.getId()));
         }
 
@@ -164,20 +164,20 @@ public class OrdersController {
 
     private OrderResponse GetOrder(Long id) {
         Optional<Order> order = orderRepository.findById(id);
-        if(!order.isPresent()) {
+        if (!order.isPresent()) {
             return null;
         }
 
         User createdUser = null;
-        if(order.get().getCreatedUserId() != null) {
+        if (order.get().getCreatedUserId() != null) {
             createdUser = userRepository.findById(order.get().getCreatedUserId()).orElse(null);
         }
         User acceptedUser = null;
-        if(order.get().getAcceptedUserId() != null) {
+        if (order.get().getAcceptedUserId() != null) {
             acceptedUser = userRepository.findById(order.get().getAcceptedUserId()).orElse(null);
         }
         User assignedUser = null;
-        if(order.get().getAssignedUserId() != null) {
+        if (order.get().getAssignedUserId() != null) {
             assignedUser = userRepository.findById(order.get().getAssignedUserId()).orElse(null);
         }
         Optional<OrderStatus> status = orderStatusRepository.findById(order.get().getStatusId());
@@ -202,19 +202,19 @@ public class OrdersController {
         Optional<Role> role = roleRepository.findById(user.get().getRoleId());
 
         Iterable<Order> orders = null;
-        if(role.get().getName() == RoleNames.Huckster) {
+        if (Objects.equals(role.get().getName(), RoleNames.Huckster)) {
             orders = orderRepository.findOrderByStatus(OrderStatusIds.NewOrder);
         }
-        if(role.get().getName() == RoleNames.Stalker) {
+        if (Objects.equals(role.get().getName(), RoleNames.Stalker)) {
             orders = orderRepository.findSuggestedOrders(Long.parseLong(userId));
         }
 
-        if(orders == null) {
+        if (orders == null) {
             orders = new ArrayList<>();
         }
 
         ArrayList<OrderResponse> response = new ArrayList<>();
-        for(Order order: orders) {
+        for (Order order : orders) {
             response.add(GetOrder(order.getId()));
         }
 

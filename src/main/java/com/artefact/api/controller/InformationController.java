@@ -8,7 +8,6 @@ import com.artefact.api.model.User;
 import com.artefact.api.repository.*;
 import com.artefact.api.request.CreateInformationOrder;
 import com.artefact.api.response.InformationResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -56,8 +55,8 @@ public class InformationController {
         return GetInformation(info.getId());
     }
 
-    @GetMapping
-    public ResponseEntity<Iterable<InformationResponse>> GetInformationList() {
+    @GetMapping("/available")
+    public ResponseEntity<Iterable<InformationResponse>> GetAvailableList() {
         Iterable<Information> information = infoRepository.findByStatus(OrderStatusIds.NewOrder);
         return GetIterableResponseEntity(information, true);
     }
@@ -75,8 +74,8 @@ public class InformationController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/available")
-    public ResponseEntity<Iterable<InformationResponse>> GetAvailableList() {
+    @GetMapping
+    public ResponseEntity<Iterable<InformationResponse>> GetInformationList() {
         String userIdStr = (String) getContext().getAuthentication().getPrincipal();
         long userId = Long.parseLong(userIdStr);
 

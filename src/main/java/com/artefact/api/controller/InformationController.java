@@ -43,6 +43,7 @@ public class InformationController {
         Information info = new Information();
         info.setCreatedUserId(Long.parseLong(userId));
         info.setStatusId(OrderStatusIds.NewOrder);
+
         info.setTitle(request.getTitle());
         info.setDescription(request.getDescription());
         info.setInformation(request.getInformation());
@@ -56,7 +57,7 @@ public class InformationController {
 
     @GetMapping("/available")
     public ResponseEntity<Iterable<InformationResponse>> GetAvailableList() {
-        Iterable<Information> information = infoRepository.findByAcceptedUser(null);
+        Iterable<Information> information = infoRepository.findByStatus(OrderStatusIds.NewOrder);
         return GetIterableResponseEntity(information, true);
     }
 

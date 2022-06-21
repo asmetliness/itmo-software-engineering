@@ -14,9 +14,9 @@ public interface InformationRepository extends PagingAndSortingRepository<Inform
     @Query("Select i from Information i where i.statusId = :statusId")
     Iterable<Information> findByStatus(@Param("statusId") long statusId);
 
-    @Query("Select Information from Information i where i.acceptedUserId = :userId")
+    @Query("Select i from Information i where i.acceptedUserId = :userId")
     Iterable<Information> findByAcceptedUser(@Param("userId") long userId);
 
-    @Query("Select Information from Information i where i.createdUserId = :userId")
+    @Query("Select i from Information i where i.createdUserId = :userId")
     Iterable<Information> findByCreatedUser(@Param("userId") long userId);
 }

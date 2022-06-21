@@ -8,6 +8,7 @@ import com.artefact.api.model.User;
 import com.artefact.api.repository.*;
 import com.artefact.api.request.CreateInformationOrder;
 import com.artefact.api.response.InformationResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -22,11 +23,11 @@ import static org.springframework.security.core.context.SecurityContextHolder.ge
 @Controller
 @RequestMapping("/api/information")
 public class InformationController {
-    private final InformationRepository infoRepository;
+    private InformationRepository infoRepository;
 
-    private final UserRepository userRepository;
+    private UserRepository userRepository;
 
-    private final RoleRepository roleRepository;
+    private RoleRepository roleRepository;
 
     public InformationController(InformationRepository infoRepository,
                                  UserRepository userRepository,

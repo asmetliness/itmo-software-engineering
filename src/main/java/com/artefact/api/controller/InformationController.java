@@ -26,26 +26,18 @@ public class InformationController {
 
     private final UserRepository userRepository;
 
-    private final OrderStatusRepository orderStatusRepository;
-
     private final RoleRepository roleRepository;
-
-    private final NotificationRepository notificationRepository;
 
     public InformationController(InformationRepository infoRepository,
                                  UserRepository userRepository,
-                                 OrderStatusRepository orderStatusRepository,
-                                 RoleRepository roleRepository,
-                                 NotificationRepository notificationRepository) {
+                                 RoleRepository roleRepository) {
         this.infoRepository = infoRepository;
         this.userRepository = userRepository;
-        this.orderStatusRepository = orderStatusRepository;
         this.roleRepository = roleRepository;
-        this.notificationRepository = notificationRepository;
     }
 
     @PostMapping
-    public ResponseEntity<Object> CreateInformation(@RequestBody CreateInformationOrder request) {
+    public ResponseEntity<InformationResponse> CreateInformation(@RequestBody CreateInformationOrder request) {
         String userId = (String) getContext().getAuthentication().getPrincipal();
 
         Information info = new Information();
@@ -65,22 +57,79 @@ public class InformationController {
 
     @GetMapping
     public ResponseEntity<Iterable<InformationResponse>> GetInformationList() {
-        String userId = (String) getContext().getAuthentication().getPrincipal();
+        Iterable<Information> information = infoRepository.findByStatus(OrderStatusIds.NewOrder);
+        return GetIterableResponseEntity(information);
+    }
 
-        Iterable<Information> information = infoRepository.getAll();
+    private ResponseEntity<Iterable<InformationResponse>> GetIterableResponseEntity(Iterable<Information> information) {
         ArrayList<InformationResponse> response = new ArrayList<>();
-
         for (Information info : information) {
-            InformationResponse info_response = (InformationResponse) GetInformation(info.getId()).getBody();
+            InformationResponse info_response = GetInformation(info.getId()).getBody();
             response.add(info_response);
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("{id}")
-    public ResponseEntity<Object> GetInformation(@PathVariable Long id) {
-        InformationResponse response = null; // TODO: Добавить правильный ответ
+    @GetMapping("/available")
+    public ResponseEntity<Iterable<InformationResponse>> GetAvailableList() {
+        String userIdStr = (String) getContext().getAuthentication().getPrincipal();
+        long userId = Long.parseLong(userIdStr);
+
+        Optional<User> user = userRepository.findById(userId);
+        Optional<Role> roleOpt = roleRepository.findById(user.get().getRoleId());
+        Role role = roleOpt.get();
+
+        Iterable<Information> information;
+        if (role.getName().equals(RoleNames.Informer)) {
+            information = infoRepository.findByCreatedUser(userId);
+        } else {
+            information = infoRepository.findByAcceptedUser(userId);
+        }
+
+        return GetIterableResponseEntity(information);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<InformationResponse> GetInformation(@PathVariable Long id) {
+        Optional<Information> infoOpt = infoRepository.findById(id);
+        if (!infoOpt.isPresent())
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+
+        Information info = infoOpt.get();
+        Optional<User> createdUser = userRepository.findById(info.getCreatedUserId()); // Not nullabel
+        Optional<User> acceptedUser = userRepository.findById(info.getAcceptedUserId());
+
+        InformationResponse response = new InformationResponse(
+                info.getId(),
+                info.getTitle(),
+                info.getDescription(),
+                info.getInformation(),
+                info.getPrice(),
+                info.getCreationDate(),
+                createdUser.get(),
+                acceptedUser.orElse(null)
+        );
+
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/buy/{id}")
+    public ResponseEntity<InformationResponse> BuyInformation(@PathVariable Long id) {
+        String userIdStr = (String) getContext().getAuthentication().getPrincipal();
+        long userId = Long.parseLong(userIdStr);
+
+        Optional<Information> infoOpt = infoRepository.findById(id);
+        if (!infoOpt.isPresent())
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+
+        Information info = infoOpt.get();
+        if (info.getCreatedUserId() == userId) // Запрещаем покупать человеку, который этот заказ создал
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+
+        info.setAcceptedUserId(userId);
+        infoRepository.save(info);
+
+        return GetInformation(info.getId());
     }
 }

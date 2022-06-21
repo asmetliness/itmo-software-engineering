@@ -9,6 +9,7 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 public class InformationResponse {
+    private Long id;
     private String title;
     private String description;
     private String information;

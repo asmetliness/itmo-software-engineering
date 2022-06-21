@@ -59,13 +59,16 @@ public class InformationController {
     @GetMapping
     public ResponseEntity<Iterable<InformationResponse>> GetInformationList() {
         Iterable<Information> information = infoRepository.findByStatus(OrderStatusIds.NewOrder);
-        return GetIterableResponseEntity(information);
+        return GetIterableResponseEntity(information, true);
     }
 
-    private ResponseEntity<Iterable<InformationResponse>> GetIterableResponseEntity(Iterable<Information> information) {
+    private ResponseEntity<Iterable<InformationResponse>> GetIterableResponseEntity(Iterable<Information> information, Boolean hideInfo) {
         ArrayList<InformationResponse> response = new ArrayList<>();
         for (Information info : information) {
             InformationResponse info_response = GetInformation(info.getId()).getBody();
+            if(hideInfo) {
+                info_response.setInformation(null);
+            }
             response.add(info_response);
         }
 
@@ -88,18 +91,28 @@ public class InformationController {
             information = infoRepository.findByAcceptedUser(userId);
         }
 
-        return GetIterableResponseEntity(information);
+        return GetIterableResponseEntity(information, false);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<InformationResponse> GetInformation(@PathVariable Long id) {
+        String userIdStr = (String) getContext().getAuthentication().getPrincipal();
+        Long userId = Long.parseLong(userIdStr);
+
         Optional<Information> infoOpt = infoRepository.findById(id);
         if (!infoOpt.isPresent())
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
 
         Information info = infoOpt.get();
         Optional<User> createdUser = userRepository.findById(info.getCreatedUserId()); // Not nullabel
-        Optional<User> acceptedUser = userRepository.findById(info.getAcceptedUserId());
+        User acceptedUser = null;
+        if(info.getAcceptedUserId() != null) {
+            acceptedUser = userRepository.findById(info.getAcceptedUserId()).orElse(null);
+        }
+
+        if(info.getAcceptedUserId() != userId && info.getCreatedUserId() != userId) {
+            info.setInformation(null);
+        }
 
         InformationResponse response = new InformationResponse(
                 info.getId(),
@@ -109,7 +122,7 @@ public class InformationController {
                 info.getPrice(),
                 info.getCreationDate(),
                 createdUser.get(),
-                acceptedUser.orElse(null)
+                acceptedUser
         );
 
         return new ResponseEntity<>(response, HttpStatus.OK);

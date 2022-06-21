@@ -1,7 +1,6 @@
 package com.artefact.api.repository;
 
 import com.artefact.api.model.Information;
-import com.artefact.api.model.Order;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +18,7 @@ public interface InformationRepository extends PagingAndSortingRepository<Inform
 
     @Query("Select i from Information i where i.createdUserId = :userId")
     Iterable<Information> findByCreatedUser(@Param("userId") long userId);
+
+    @Query("Select i from Information i where i.acceptedUserId is null")
+    Iterable<Information> findAllNotAccepted();
 }

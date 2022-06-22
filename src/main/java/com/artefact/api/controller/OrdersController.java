@@ -154,6 +154,19 @@ public class OrdersController {
 
         orderRepository.save(order);
 
+        try {
+            Role hucksterRole = roleRepository.findByName(RoleNames.Huckster);
+            Iterable<User> hucksters = userRepository.findByRole(hucksterRole.getId());
+
+            for(User user: hucksters){
+                notificationRepository.save(new Notification("Был создан новый заказ!",
+                        user.getId(),
+                        order.getId()));
+            }
+        } catch (Exception ex) {
+
+        }
+
         return GetOrderResponse(order.getId());
     }
 

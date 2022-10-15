@@ -23,7 +23,12 @@ public class User {
     private String lastName;
     @Column(name = "middle_name")
     private String middleName;
-    @Column(name = "role_id")
+
+    @ManyToOne(targetEntity = Role.class, optional = false)
+    @JoinColumn(name="role_id", nullable = false, insertable = false, updatable = false)
+    private Role role;
+
+    @Column(name="role_id")
     private Long roleId;
 
     @Column(name = "password_hash")

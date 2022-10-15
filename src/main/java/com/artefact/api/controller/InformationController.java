@@ -26,14 +26,11 @@ public class InformationController {
 
     private UserRepository userRepository;
 
-    private RoleRepository roleRepository;
 
     public InformationController(InformationRepository infoRepository,
-                                 UserRepository userRepository,
-                                 RoleRepository roleRepository) {
+                                 UserRepository userRepository) {
         this.infoRepository = infoRepository;
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
     }
 
     @PostMapping
@@ -79,8 +76,7 @@ public class InformationController {
         long userId = Long.parseLong(userIdStr);
 
         Optional<User> user = userRepository.findById(userId);
-        Optional<Role> roleOpt = roleRepository.findById(user.get().getRoleId());
-        Role role = roleOpt.get();
+        Role role = user.get().getRole();
 
         Iterable<Information> information;
         if (role.getName().equals(RoleNames.Informer)) {

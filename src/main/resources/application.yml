@@ -5,6 +5,11 @@ spring:
     username: artifact
     password: artifact
 
+debug: true
+
+server:
+  port: 9999
+
 flyway:
   url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact
   user: artifact

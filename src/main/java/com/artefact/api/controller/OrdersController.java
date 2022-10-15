@@ -71,7 +71,7 @@ public class OrdersController {
         String userId = (String) getContext().getAuthentication().getPrincipal();
 
         Optional<User> user = userRepository.findById(Long.parseLong(userId));
-        Optional<Role> role = roleRepository.findById(user.get().getRoleId());
+        Role role = user.get().getRole();
 
         Optional<Order> order = orderRepository.findById(id);
 
@@ -79,7 +79,7 @@ public class OrdersController {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
         Order orderVal = order.get();
-        if (role.get().getName().equals(RoleNames.Huckster)) {
+        if (role.getName().equals(RoleNames.Huckster)) {
             orderVal.setAcceptedUserId(null);
             orderVal.setStatusId(OrderStatusIds.NewOrder);
 
@@ -87,7 +87,7 @@ public class OrdersController {
                     orderVal.getCreatedUserId(),
                     orderVal.getId()));
         }
-        if (role.get().getName().equals(RoleNames.Stalker)) {
+        if (role.getName().equals(RoleNames.Stalker)) {
             orderVal.setAssignedUserId(null);
             orderVal.setSuggestedUserId(null);
             orderVal.setStatusId(OrderStatusIds.AcceptedByHuckster);
@@ -109,7 +109,7 @@ public class OrdersController {
         String userId = (String) getContext().getAuthentication().getPrincipal();
 
         Optional<User> user = userRepository.findById(Long.parseLong(userId));
-        Optional<Role> role = roleRepository.findById(user.get().getRoleId());
+        Role role = user.get().getRole();
 
         Optional<Order> order = orderRepository.findById(id);
 
@@ -117,7 +117,7 @@ public class OrdersController {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
         Order orderVal = order.get();
-        if (role.get().getName().equals(RoleNames.Huckster)) {
+        if (role.getName().equals(RoleNames.Huckster)) {
             orderVal.setAcceptedUserId(user.get().getId());
             orderVal.setStatusId(OrderStatusIds.AcceptedByHuckster);
 
@@ -125,7 +125,7 @@ public class OrdersController {
                     orderVal.getCreatedUserId(),
                     orderVal.getId()));
         }
-        if (role.get().getName().equals(RoleNames.Stalker)) {
+        if (role.getName().equals(RoleNames.Stalker)) {
             orderVal.setAssignedUserId(user.get().getId());
             orderVal.setSuggestedUserId(null);
             orderVal.setStatusId(OrderStatusIds.AcceptedByStalker);
@@ -186,20 +186,20 @@ public class OrdersController {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Optional<User> user = userRepository.findById(Long.parseLong(userId));
-        Optional<Role> role = roleRepository.findById(user.get().getRoleId());
+        Role role = user.get().getRole();
 
         Iterable<Order> orders = null;
-        String name = role.get().getName();
+        String name = role.getName();
 
-        if (role.get().getName().equals(RoleNames.Client)) {
+        if (role.getName().equals(RoleNames.Client)) {
             orders = orderRepository.findByCreatedUserId(Long.parseLong(userId));
         }
 
-        if (role.get().getName().equals(RoleNames.Stalker)) {
+        if (role.getName().equals(RoleNames.Stalker)) {
             orders = orderRepository.findByAssignedUserId(Long.parseLong(userId));
         }
 
-        if (role.get().getName().equals(RoleNames.Huckster)) {
+        if (role.getName().equals(RoleNames.Huckster)) {
             orders = orderRepository.findByAcceptedUserId(Long.parseLong(userId));
         }
 
@@ -252,13 +252,13 @@ public class OrdersController {
         String userId = (String) getContext().getAuthentication().getPrincipal();
 
         Optional<User> user = userRepository.findById(Long.parseLong(userId));
-        Optional<Role> role = roleRepository.findById(user.get().getRoleId());
+        Role role = user.get().getRole();
 
         Iterable<Order> orders = null;
-        if (Objects.equals(role.get().getName(), RoleNames.Huckster)) {
+        if (Objects.equals(role.getName(), RoleNames.Huckster)) {
             orders = orderRepository.findOrderByStatus(OrderStatusIds.NewOrder);
         }
-        if (Objects.equals(role.get().getName(), RoleNames.Stalker)) {
+        if (Objects.equals(role.getName(), RoleNames.Stalker)) {
             orders = orderRepository.findSuggestedOrders(Long.parseLong(userId));
         }
 

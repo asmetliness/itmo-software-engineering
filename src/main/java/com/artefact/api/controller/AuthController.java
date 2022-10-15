@@ -26,15 +26,24 @@ public class AuthController {
     private UserRepository userRepository;
     @Autowired
     private RoleRepository roleRepository;
-
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+
+
+    @PostMapping("/test")
+    public ResponseEntity Test() {
+        Optional<User> existingUser = userRepository.findByEmail("test");
+
+
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
     @PostMapping("/register")
     public ResponseEntity<Object> Register(@RequestBody RegisterRequest request) {
-        User existingUser = userRepository.findByEmail(request.getEmail());
+        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser != null) {
             return new ResponseEntity<>("Пользователь с таким email уже существует", HttpStatus.BAD_REQUEST);
         }
@@ -56,23 +65,22 @@ public class AuthController {
 
         String token = jwtUtil.generateToken(user.getId());
 
+
+        Optional<User> test = userRepository.findById(user.getId());
+
         return new ResponseEntity<>(new AuthResponse(token, user, role.get()), HttpStatus.OK);
     }
 
     @PostMapping("/login")
     public ResponseEntity<Object> Login(@RequestBody LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail());
-        if (user == null) {
+        Optional<User> user = userRepository.findByEmail(request.getEmail());
+        if (!user.isPresent()) {
             return new ResponseEntity<>("Пользователь не найден!", HttpStatus.NOT_FOUND);
         }
-
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.get().getPasswordHash())) {
             return new ResponseEntity<>("Пользователь не найден!", HttpStatus.NOT_FOUND);
         }
-
-        Optional<Role> role = roleRepository.findById(user.getRoleId());
-        String token = jwtUtil.generateToken(user.getId());
-
-        return new ResponseEntity<>(new AuthResponse(token, user, role.get()), HttpStatus.OK);
+        String token = jwtUtil.generateToken(user.get().getId());
+        return new ResponseEntity<>(new AuthResponse(token, user.get(), user.get().getRole()), HttpStatus.OK);
     }
 }

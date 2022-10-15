@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class ArtifactController {
     @Autowired
     private ArtifactRepository artifactRepository;
-
     @GetMapping("")
     public ResponseEntity<Iterable<Artifact>> getArtifacts() {
         return new ResponseEntity<>(artifactRepository.findAll(), HttpStatus.OK);

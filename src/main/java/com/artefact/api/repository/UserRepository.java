@@ -7,15 +7,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Repository
 @Transactional
 public interface UserRepository extends PagingAndSortingRepository<User, Long> {
-    @Query("Select u from User u where u.email = :email")
-    User findByEmail(@Param("email") String email);
+    @Query("Select u, r from User u join Role r on r.id = u.roleId where u.email = :email")
+    Optional<User> findByEmail(@Param("email") String email);
 
-    @Query("Select u from User u where u.email = :email AND u.passwordHash = :password")
-    User findByCredentials(@Param("email") String email, @Param("password") String password);
-
-    @Query("Select u from User u where u.roleId = :id")
+    @Query("Select u, r from User u join Role r on r.id = u.roleId where u.roleId = :id")
     Iterable<User> findByRole(@Param("id") Long id);
 }

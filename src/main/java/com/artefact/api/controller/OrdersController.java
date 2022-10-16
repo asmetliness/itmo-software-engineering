@@ -26,25 +26,17 @@ public class OrdersController {
 
     private final UserRepository userRepository;
 
-    private final OrderStatusRepository orderStatusRepository;
-
     private final RoleRepository roleRepository;
-
-    private final ArtifactRepository artifactRepository;
 
     private final NotificationRepository notificationRepository;
 
     public OrdersController(OrderRepository orderRepository,
                             UserRepository userRepository,
-                            OrderStatusRepository orderStatusRepository,
                             RoleRepository roleRepository,
-                            ArtifactRepository artifactRepository,
                             NotificationRepository notificationRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
-        this.orderStatusRepository = orderStatusRepository;
         this.roleRepository = roleRepository;
-        this.artifactRepository = artifactRepository;
         this.notificationRepository = notificationRepository;
     }
 
@@ -189,7 +181,6 @@ public class OrdersController {
         Role role = user.get().getRole();
 
         Iterable<Order> orders = null;
-        String name = role.getName();
 
         if (role.getName().equals(RoleNames.Client)) {
             orders = orderRepository.findByCreatedUserId(Long.parseLong(userId));
@@ -209,7 +200,14 @@ public class OrdersController {
 
         ArrayList<OrderResponse> response = new ArrayList<>();
         for (Order order : orders) {
-            response.add(GetOrder(order.getId()));
+            response.add(new OrderResponse(
+                    order,
+                    order.getCreatedUser(),
+                    order.getAcceptedUser(),
+                    order.getAssignedUser(),
+                    order.getStatus(),
+                    order.getArtifact()
+            ));
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -221,29 +219,19 @@ public class OrdersController {
             return null;
         }
 
-        User createdUser = null;
-        if (order.get().getCreatedUserId() != null) {
-            createdUser = userRepository.findById(order.get().getCreatedUserId()).orElse(null);
-        }
-        User acceptedUser = null;
-        if (order.get().getAcceptedUserId() != null) {
-            acceptedUser = userRepository.findById(order.get().getAcceptedUserId()).orElse(null);
-        }
-        User assignedUser = null;
-        if (order.get().getAssignedUserId() != null) {
-            assignedUser = userRepository.findById(order.get().getAssignedUserId()).orElse(null);
-        }
-        Optional<OrderStatus> status = orderStatusRepository.findById(order.get().getStatusId());
-
-        Artifact artifact = artifactRepository.findById(order.get().getArtifactId()).get();
+        User createdUser = order.get().getCreatedUser();
+        User acceptedUser = order.get().getAcceptedUser();
+        User assignedUser = order.get().getAssignedUser();
+        OrderStatus status = order.get().getStatus();
+        Artifact artifact = order.get().getArtifact();
 
         OrderResponse response = new OrderResponse(
                 order.get(),
-                createdUser,
-                acceptedUser,
-                assignedUser,
-                status.get(),
-                artifact);
+                order.get().getCreatedUser(),
+                order.get().getAcceptedUser(),
+                order.get().getAssignedUser(),
+                order.get().getStatus(),
+                order.get().getArtifact());
         return response;
     }
 

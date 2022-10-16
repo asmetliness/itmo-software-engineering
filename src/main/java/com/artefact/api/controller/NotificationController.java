@@ -2,7 +2,6 @@ package com.artefact.api.controller;
 
 import com.artefact.api.model.Artifact;
 import com.artefact.api.model.Notification;
-import com.artefact.api.repository.ArtifactRepository;
 import com.artefact.api.repository.NotificationRepository;
 import com.artefact.api.response.NotificationResponse;
 import org.springframework.beans.factory.annotation.Autowired;

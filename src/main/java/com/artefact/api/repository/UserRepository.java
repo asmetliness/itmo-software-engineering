@@ -12,9 +12,14 @@ import java.util.Optional;
 @Repository
 @Transactional
 public interface UserRepository extends PagingAndSortingRepository<User, Long> {
-    @Query("Select u, r from User u join Role r on r.id = u.roleId where u.email = :email")
+
+    String UserBaseQuery = "Select u, r from User u join Role r on r.id = u.roleId ";
+    String ByEmailQuery = UserBaseQuery + "where u.email = :email";
+    String ByRoleQuery = UserBaseQuery + "where u.roleId = :id";
+
+    @Query(ByEmailQuery)
     Optional<User> findByEmail(@Param("email") String email);
 
-    @Query("Select u, r from User u join Role r on r.id = u.roleId where u.roleId = :id")
+    @Query(ByRoleQuery)
     Iterable<User> findByRole(@Param("id") Long id);
 }

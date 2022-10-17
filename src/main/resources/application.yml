@@ -4,6 +4,9 @@ spring:
     url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact
     username: artifact
     password: artifact
+  jpa:
+    hibernate:
+      ddl-auto: create
 
 debug: true
 

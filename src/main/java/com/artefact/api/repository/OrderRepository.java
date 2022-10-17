@@ -11,8 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @Transactional
 public interface OrderRepository extends PagingAndSortingRepository<Order, Long> {
-
-    @Query("Select " +
+    String BaseOrderQuery = "Select " +
             "o, " +
             "s," +
             "a," +
@@ -26,80 +25,28 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, Long>
             "join User cu on o.createdUserId = cu.id " +
             "left join User au on o.acceptedUserId = au.id " +
             "left join User asu on o.assignedUserId = asu.id " +
-            "left join User su on o.suggestedUserId = su.id " +
-            "where o.createdUserId = :userId")
+            "left join User su on o.suggestedUserId = su.id ";
+
+    String ByCreatedUserQuery     = BaseOrderQuery + " where o.createdUserId = :userId";
+    String ByAssignedUserQuery    = BaseOrderQuery + " where o.assignedUserId = :userId";
+    String ByAcceptedUserQuery    = BaseOrderQuery + " where o.acceptedUserId = :userId";
+    String ByOrderStatusQuery     = BaseOrderQuery + " where o.statusId = :statusId";
+    String BySuggestedUserQuery   = BaseOrderQuery + " where o.suggestedUserId = :userId";
+
+
+    @Query(ByCreatedUserQuery)
     Iterable<IOrderResult> findByCreatedUserId(@Param("userId") long userId);
 
-    @Query("Select " +
-            "o, " +
-            "s," +
-            "a," +
-            "cu," +
-            "au," +
-            "asu," +
-            "su " +
-            "from Order o " +
-            "join OrderStatus s on o.statusId = s.id " +
-            "join Artifact a on o.artifactId = a.id " +
-            "join User cu on o.createdUserId = cu.id " +
-            "left join User au on o.acceptedUserId = au.id " +
-            "left join User asu on o.assignedUserId = asu.id " +
-            "left join User su on o.suggestedUserId = su.id " +
-            "where o.assignedUserId = :userId")
+    @Query(ByAssignedUserQuery)
     Iterable<IOrderResult> findByAssignedUserId(@Param("userId") long userId);
 
-    @Query("Select " +
-            "o, " +
-            "s," +
-            "a," +
-            "cu," +
-            "au," +
-            "asu," +
-            "su " +
-            "from Order o " +
-            "join OrderStatus s on o.statusId = s.id " +
-            "join Artifact a on o.artifactId = a.id " +
-            "join User cu on o.createdUserId = cu.id " +
-            "left join User au on o.acceptedUserId = au.id " +
-            "left join User asu on o.assignedUserId = asu.id " +
-            "left join User su on o.suggestedUserId = su.id " +
-            "where o.acceptedUserId = :userId")
+    @Query(ByAcceptedUserQuery)
     Iterable<IOrderResult> findByAcceptedUserId(@Param("userId") long userId);
 
-    @Query("Select " +
-            "o as order, " +
-            "s as status, " +
-            "a as artifact, " +
-            "cu as createdUser, " +
-            "au as acceptedUser, " +
-            "asu as assignedUser, " +
-            "su as suggestedUser " +
-            "from Order o " +
-            "join OrderStatus s on o.statusId = s.id " +
-            "join Artifact a on o.artifactId = a.id " +
-            "join User cu on o.createdUserId = cu.id " +
-            "left join User au on o.acceptedUserId = au.id " +
-            "left join User asu on o.assignedUserId = asu.id " +
-            "left join User su on o.suggestedUserId = su.id " +
-            "where o.statusId = :statusId")
+    @Query(ByOrderStatusQuery)
     Iterable<IOrderResult> findOrderByStatus(@Param("statusId") long statusId);
 
-    @Query("Select " +
-            "o as order, " +
-            "s as status," +
-            "a as artifact, " +
-            "cu as createdUser, " +
-            "au as acceptedUser, " +
-            "asu as assignedUser, " +
-            "su as suggestedUser " +
-            "from Order o " +
-            "join OrderStatus s on o.statusId = s.id " +
-            "join Artifact a on o.artifactId = a.id " +
-            "join User cu on o.createdUserId = cu.id " +
-            "left join User au on o.acceptedUserId = au.id " +
-            "left join User asu on o.assignedUserId = asu.id " +
-            "left join User su on o.suggestedUserId = su.id " +
-            "where o.suggestedUserId = :userId")
+    @Query(BySuggestedUserQuery)
     Iterable<IOrderResult> findSuggestedOrders(@Param("userId") long userId);
 }
 

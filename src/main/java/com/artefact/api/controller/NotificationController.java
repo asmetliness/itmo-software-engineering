@@ -1,6 +1,5 @@
 package com.artefact.api.controller;
 
-import com.artefact.api.model.Artifact;
 import com.artefact.api.model.Notification;
 import com.artefact.api.repository.NotificationRepository;
 import com.artefact.api.response.NotificationResponse;
@@ -18,8 +17,11 @@ import static org.springframework.security.core.context.SecurityContextHolder.ge
 @Controller
 @RequestMapping("/api/notifications")
 public class NotificationController {
-    @Autowired
-    private NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
+
+    public NotificationController(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
+    }
 
     @GetMapping("")
     public ResponseEntity<Iterable<NotificationResponse>> getNotifications() {

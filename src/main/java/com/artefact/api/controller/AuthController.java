@@ -22,29 +22,23 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private JwtUtil jwtUtil;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
 
-
-
-    @PostMapping("/test")
-    public ResponseEntity Test() {
-        Optional<User> existingUser = userRepository.findByEmail("test");
-
-
-        return new ResponseEntity(HttpStatus.OK);
+    public AuthController(UserRepository userRepository, RoleRepository roleRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.jwtUtil = jwtUtil;
+        this.passwordEncoder = passwordEncoder;
     }
+
 
     @PostMapping("/register")
     public ResponseEntity<Object> Register(@RequestBody RegisterRequest request) {
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
-        if (existingUser != null) {
+        if (existingUser.isPresent()) {
             return new ResponseEntity<>("Пользователь с таким email уже существует", HttpStatus.BAD_REQUEST);
         }
 
@@ -64,9 +58,6 @@ public class AuthController {
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getId());
-
-
-        Optional<User> test = userRepository.findById(user.getId());
 
         return new ResponseEntity<>(new AuthResponse(token, user, role.get()), HttpStatus.OK);
     }

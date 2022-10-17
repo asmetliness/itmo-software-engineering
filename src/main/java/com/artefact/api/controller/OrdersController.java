@@ -4,9 +4,11 @@ import com.artefact.api.consts.OrderStatusIds;
 import com.artefact.api.consts.RoleNames;
 import com.artefact.api.model.*;
 import com.artefact.api.repository.*;
+import com.artefact.api.repository.results.IOrderResult;
 import com.artefact.api.request.CreateOrderRequest;
 import com.artefact.api.request.SuggestOrderRequest;
 import com.artefact.api.response.OrderResponse;
+import com.sun.org.apache.bcel.internal.generic.IOR;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -180,7 +182,7 @@ public class OrdersController {
         Optional<User> user = userRepository.findById(Long.parseLong(userId));
         Role role = user.get().getRole();
 
-        Iterable<Order> orders = null;
+        Iterable<IOrderResult> orders = null;
 
         if (role.getName().equals(RoleNames.Client)) {
             orders = orderRepository.findByCreatedUserId(Long.parseLong(userId));
@@ -199,9 +201,9 @@ public class OrdersController {
         }
 
         ArrayList<OrderResponse> response = new ArrayList<>();
-        for (Order order : orders) {
+        for (IOrderResult order : orders) {
             response.add(new OrderResponse(
-                    order,
+                    order.getOrder(),
                     order.getCreatedUser(),
                     order.getAcceptedUser(),
                     order.getAssignedUser(),
@@ -225,14 +227,13 @@ public class OrdersController {
         OrderStatus status = order.get().getStatus();
         Artifact artifact = order.get().getArtifact();
 
-        OrderResponse response = new OrderResponse(
+        return new OrderResponse(
                 order.get(),
                 order.get().getCreatedUser(),
                 order.get().getAcceptedUser(),
                 order.get().getAssignedUser(),
                 order.get().getStatus(),
                 order.get().getArtifact());
-        return response;
     }
 
     @GetMapping("/available")
@@ -242,9 +243,9 @@ public class OrdersController {
         Optional<User> user = userRepository.findById(Long.parseLong(userId));
         Role role = user.get().getRole();
 
-        Iterable<Order> orders = null;
+        Iterable<IOrderResult> orders = null;
         if (Objects.equals(role.getName(), RoleNames.Huckster)) {
-            orders = orderRepository.findOrderByStatus(OrderStatusIds.NewOrder);
+            orders  = (orderRepository.findOrderByStatus(OrderStatusIds.NewOrder));
         }
         if (Objects.equals(role.getName(), RoleNames.Stalker)) {
             orders = orderRepository.findSuggestedOrders(Long.parseLong(userId));
@@ -255,8 +256,14 @@ public class OrdersController {
         }
 
         ArrayList<OrderResponse> response = new ArrayList<>();
-        for (Order order : orders) {
-            response.add(GetOrder(order.getId()));
+        for (IOrderResult order : orders) {
+            response.add(new OrderResponse(
+                    order.getOrder(),
+                    order.getCreatedUser(),
+                    order.getAcceptedUser(),
+                    order.getAssignedUser(),
+                    order.getStatus(),
+                    order.getArtifact()));
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);

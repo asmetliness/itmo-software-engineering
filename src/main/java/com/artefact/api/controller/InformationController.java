@@ -22,9 +22,9 @@ import static org.springframework.security.core.context.SecurityContextHolder.ge
 @Controller
 @RequestMapping("/api/information")
 public class InformationController {
-    private InformationRepository infoRepository;
+    final private InformationRepository infoRepository;
 
-    private UserRepository userRepository;
+    final private UserRepository userRepository;
 
 
     public InformationController(InformationRepository infoRepository,

@@ -1,7 +1,6 @@
 package com.artefact.api.controller;
 
 import com.artefact.api.consts.RoleNames;
-import com.artefact.api.model.Order;
 import com.artefact.api.model.Role;
 import com.artefact.api.model.User;
 import com.artefact.api.repository.OrderRepository;
@@ -17,18 +16,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/api/users")
 public class UserController {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
-    @Autowired
-    OrderRepository orderRepository;
+    public UserController(UserRepository userRepository, RoleRepository roleRepository) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+    }
 
     @GetMapping("/current")
     public ResponseEntity<UserResponse> getUserDetails() {

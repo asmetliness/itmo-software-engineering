@@ -55,7 +55,7 @@ public class AuthController {
 
         String token = jwtUtil.generateToken(user.getId());
 
-        return new ResponseEntity<>(new AuthResponse(token, user, role), HttpStatus.OK);
+        return new ResponseEntity<>(new AuthResponse(token, user), HttpStatus.OK);
     }
 
     @PostMapping("/login")
@@ -68,6 +68,6 @@ public class AuthController {
             return new ResponseEntity<>("Пользователь не найден!", HttpStatus.NOT_FOUND);
         }
         String token = jwtUtil.generateToken(user.get().getId());
-        return new ResponseEntity<>(new AuthResponse(token, user.get(), user.get().getRole()), HttpStatus.OK);
+        return new ResponseEntity<>(new AuthResponse(token, user.get()), HttpStatus.OK);
     }
 }

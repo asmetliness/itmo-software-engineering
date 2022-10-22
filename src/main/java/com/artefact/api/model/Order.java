@@ -37,24 +37,24 @@ public class Order {
     private Long createdUserId;
 
     @JsonIgnore
-    @ManyToOne(targetEntity = User.class, optional = true)
-    @JoinColumn(name="accepted_user_id", nullable = true, insertable = false, updatable = false)
+    @ManyToOne(targetEntity = User.class)
+    @JoinColumn(name="accepted_user_id", insertable = false, updatable = false)
     private User acceptedUser;
 
     @Column(name = "accepted_user_id")
     private Long acceptedUserId;
 
     @JsonIgnore
-    @ManyToOne(targetEntity = User.class, optional = true)
-    @JoinColumn(name="assigned_user_id", nullable = true, insertable = false, updatable = false)
+    @ManyToOne(targetEntity = User.class)
+    @JoinColumn(name="assigned_user_id", insertable = false, updatable = false)
     private User assignedUser;
 
     @Column(name = "assigned_user_id")
     private Long assignedUserId;
 
     @JsonIgnore
-    @ManyToOne(targetEntity = User.class, optional = true)
-    @JoinColumn(name="suggested_user_id", nullable = true, insertable = false, updatable = false)
+    @ManyToOne(targetEntity = User.class)
+    @JoinColumn(name="suggested_user_id", insertable = false, updatable = false)
     private User suggestedUser;
 
     @Column(name = "suggested_user_id")

@@ -24,7 +24,7 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column()
+    @Column
     private String message;
 
     @Column(name = "was_read")

@@ -29,7 +29,7 @@ public class Order {
     private Date completionDate;
 
     @JsonIgnore
-    @ManyToOne(targetEntity = User.class, optional = true)
+    @ManyToOne(targetEntity = User.class)
     @JoinColumn(name="created_user_id", nullable = false, insertable = false, updatable = false)
     private User createdUser;
 

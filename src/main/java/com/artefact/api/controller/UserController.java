@@ -1,13 +1,9 @@
 package com.artefact.api.controller;
 
-import com.artefact.api.consts.RoleNames;
-import com.artefact.api.model.Role;
+import com.artefact.api.consts.Role;
 import com.artefact.api.model.User;
-import com.artefact.api.repository.OrderRepository;
-import com.artefact.api.repository.RoleRepository;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.response.UserResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,11 +17,9 @@ import java.util.ArrayList;
 @RequestMapping("/api/users")
 public class UserController {
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
 
-    public UserController(UserRepository userRepository, RoleRepository roleRepository) {
+    public UserController(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
     }
 
     @GetMapping("/current")
@@ -42,15 +36,13 @@ public class UserController {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         User user = userRepository.findById(Long.parseLong(userId)).get();
-        Role role = user.getRole();
+        String role = user.getRole();
 
-        if (!role.getName().equals(RoleNames.Huckster)) {
+        if (!role.equals(Role.Huckster)) {
             return new ResponseEntity<>(new ArrayList<User>(), HttpStatus.OK);
         }
 
-        Role stalkerRole = roleRepository.findByName(RoleNames.Stalker);
-
-        Iterable<User> users = userRepository.findByRole(stalkerRole.getId());
+        Iterable<User> users = userRepository.findByRole(Role.Stalker);
 
         return new ResponseEntity<>(users, HttpStatus.OK);
     }

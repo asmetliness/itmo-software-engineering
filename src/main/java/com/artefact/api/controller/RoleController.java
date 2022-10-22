@@ -1,27 +1,22 @@
 package com.artefact.api.controller;
 
-
-import com.artefact.api.model.Role;
-import com.artefact.api.repository.RoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.artefact.api.consts.Role;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.Arrays;
+
 @Controller
 @RequestMapping("/api/roles")
 public class RoleController {
-    private final RoleRepository roleRepository;
-
-    public RoleController(RoleRepository roleRepository) {
-        this.roleRepository = roleRepository;
-    }
+    public RoleController() {}
 
     @GetMapping
-    public ResponseEntity<Iterable<Role>> getAllRoles() {
-        Iterable<Role> roles = roleRepository.findAll();
+    public ResponseEntity<Iterable<String>> getAllRoles() {
+        Iterable<String> roles = Arrays.asList(Role.ALL);
         return new ResponseEntity<>(roles, HttpStatus.OK);
     }
 }

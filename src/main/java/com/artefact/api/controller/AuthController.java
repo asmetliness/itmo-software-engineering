@@ -1,14 +1,12 @@
 package com.artefact.api.controller;
 
-import com.artefact.api.model.Role;
+import com.artefact.api.consts.Role;
 import com.artefact.api.model.User;
-import com.artefact.api.repository.RoleRepository;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.LoginRequest;
 import com.artefact.api.request.RegisterRequest;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.security.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,13 +21,11 @@ import java.util.Optional;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UserRepository userRepository, RoleRepository roleRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder) {
+    public AuthController(UserRepository userRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
     }
@@ -42,24 +38,24 @@ public class AuthController {
             return new ResponseEntity<>("Пользователь с таким email уже существует", HttpStatus.BAD_REQUEST);
         }
 
-        if (request.getRoleId() == null) {
+        String role = request.getRole();
+        if (role == null) {
             return new ResponseEntity<>("Переданная роль не найдена", HttpStatus.BAD_REQUEST);
         }
 
-        Optional<Role> role = roleRepository.findById(request.getRoleId());
-        if (!role.isPresent()) {
+        if (!Role.isPresent(role)) {
             return new ResponseEntity<>("Переданная роль не найдена", HttpStatus.BAD_REQUEST);
         }
 
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setRoleId(request.getRoleId());
+        user.setRole(role);
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getId());
 
-        return new ResponseEntity<>(new AuthResponse(token, user, role.get()), HttpStatus.OK);
+        return new ResponseEntity<>(new AuthResponse(token, user, role), HttpStatus.OK);
     }
 
     @PostMapping("/login")

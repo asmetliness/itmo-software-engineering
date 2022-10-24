@@ -1,14 +1,9 @@
 package com.artefact.api.controller;
 
-import com.artefact.api.consts.RoleNames;
-import com.artefact.api.model.Order;
-import com.artefact.api.model.Role;
+import com.artefact.api.consts.Role;
 import com.artefact.api.model.User;
-import com.artefact.api.repository.OrderRepository;
-import com.artefact.api.repository.RoleRepository;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.response.UserResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,18 +12,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/api/users")
 public class UserController {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    OrderRepository orderRepository;
+    public UserController(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @GetMapping("/current")
     public ResponseEntity<UserResponse> getUserDetails() {
@@ -36,8 +28,7 @@ public class UserController {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         User user = userRepository.findById(Long.parseLong(userId)).get();
-        Role role = roleRepository.findById(user.getRoleId()).get();
-        return new ResponseEntity<>(new UserResponse(user, role), HttpStatus.OK);
+        return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
     }
 
     @GetMapping("/stalkers")
@@ -45,14 +36,13 @@ public class UserController {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         User user = userRepository.findById(Long.parseLong(userId)).get();
-        Role role = roleRepository.findById(user.getRoleId()).get();
-        if (!role.getName().equals(RoleNames.Huckster)) {
-            return new ResponseEntity<>(new ArrayList<User>(), HttpStatus.OK);
+        String role = user.getRole();
+
+        if (!role.equals(Role.Huckster)) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
         }
 
-        Role stalkerRole = roleRepository.findByName(RoleNames.Stalker);
-
-        Iterable<User> users = userRepository.findByRole(stalkerRole.getId());
+        Iterable<User> users = userRepository.findByRole(Role.Stalker);
 
         return new ResponseEntity<>(users, HttpStatus.OK);
     }

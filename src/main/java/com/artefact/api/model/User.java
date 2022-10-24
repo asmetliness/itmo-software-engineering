@@ -23,8 +23,11 @@ public class User {
     private String lastName;
     @Column(name = "middle_name")
     private String middleName;
-    @Column(name = "role_id")
-    private Long roleId;
+    @Column(name = "nickname")
+    private String nickname;
+
+    @Column(name = "role")
+    private String role;
 
     @Column(name = "password_hash")
     @JsonIgnore

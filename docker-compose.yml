@@ -10,15 +10,22 @@ services:
       - POSTGRES_USER=artifact
       - POSTGRES_PASSWORD=artifact
       - POSTGRES_DB=artifact
-
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  pgAdmin:
+    image: dpage/pgadmin4:6.1
     ports:
-      - "8080:8080"
+      - "80:80"
     environment:
-      - POSTGRESQL_DB_HOST=postgresql
+      - PGADMIN_DEFAULT_EMAIL=artifact@yandex.ru
+      - PGADMIN_DEFAULT_PASSWORD=artifact
+
+#  api:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - POSTGRESQL_DB_HOST=postgresql
 
 volumes:
   db_data:

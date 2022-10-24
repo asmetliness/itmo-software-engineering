@@ -4,6 +4,14 @@ spring:
     url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact
     username: artifact
     password: artifact
+  jpa:
+    hibernate:
+      ddl-auto: create
+
+debug: true
+
+server:
+  port: 8080
 
 flyway:
   url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact

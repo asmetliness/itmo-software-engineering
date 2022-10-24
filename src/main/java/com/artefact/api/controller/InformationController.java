@@ -1,9 +1,8 @@
 package com.artefact.api.controller;
 
 import com.artefact.api.consts.OrderStatusIds;
-import com.artefact.api.consts.RoleNames;
+import com.artefact.api.consts.Role;
 import com.artefact.api.model.Information;
-import com.artefact.api.model.Role;
 import com.artefact.api.model.User;
 import com.artefact.api.repository.*;
 import com.artefact.api.request.CreateInformationOrder;
@@ -22,18 +21,15 @@ import static org.springframework.security.core.context.SecurityContextHolder.ge
 @Controller
 @RequestMapping("/api/information")
 public class InformationController {
-    private InformationRepository infoRepository;
+    final private InformationRepository infoRepository;
 
-    private UserRepository userRepository;
+    final private UserRepository userRepository;
 
-    private RoleRepository roleRepository;
 
     public InformationController(InformationRepository infoRepository,
-                                 UserRepository userRepository,
-                                 RoleRepository roleRepository) {
+                                 UserRepository userRepository) {
         this.infoRepository = infoRepository;
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
     }
 
     @PostMapping
@@ -79,11 +75,10 @@ public class InformationController {
         long userId = Long.parseLong(userIdStr);
 
         Optional<User> user = userRepository.findById(userId);
-        Optional<Role> roleOpt = roleRepository.findById(user.get().getRoleId());
-        Role role = roleOpt.get();
+        String role = user.get().getRole();
 
         Iterable<Information> information;
-        if (role.getName().equals(RoleNames.Informer)) {
+        if (role.equals(Role.Informer)) {
             information = infoRepository.findByCreatedUser(userId);
         } else {
             information = infoRepository.findByAcceptedUser(userId);

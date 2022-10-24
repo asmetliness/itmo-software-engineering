@@ -1,9 +1,10 @@
 package com.artefact.api.controller;
 
 import com.artefact.api.consts.OrderStatusIds;
-import com.artefact.api.consts.RoleNames;
+import com.artefact.api.consts.Role;
 import com.artefact.api.model.*;
 import com.artefact.api.repository.*;
+import com.artefact.api.repository.results.IOrderResult;
 import com.artefact.api.request.CreateOrderRequest;
 import com.artefact.api.request.SuggestOrderRequest;
 import com.artefact.api.response.OrderResponse;
@@ -26,25 +27,13 @@ public class OrdersController {
 
     private final UserRepository userRepository;
 
-    private final OrderStatusRepository orderStatusRepository;
-
-    private final RoleRepository roleRepository;
-
-    private final ArtifactRepository artifactRepository;
-
     private final NotificationRepository notificationRepository;
 
     public OrdersController(OrderRepository orderRepository,
                             UserRepository userRepository,
-                            OrderStatusRepository orderStatusRepository,
-                            RoleRepository roleRepository,
-                            ArtifactRepository artifactRepository,
                             NotificationRepository notificationRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
-        this.orderStatusRepository = orderStatusRepository;
-        this.roleRepository = roleRepository;
-        this.artifactRepository = artifactRepository;
         this.notificationRepository = notificationRepository;
     }
 
@@ -71,7 +60,7 @@ public class OrdersController {
         String userId = (String) getContext().getAuthentication().getPrincipal();
 
         Optional<User> user = userRepository.findById(Long.parseLong(userId));
-        Optional<Role> role = roleRepository.findById(user.get().getRoleId());
+        String role = user.get().getRole();
 
         Optional<Order> order = orderRepository.findById(id);
 
@@ -79,7 +68,7 @@ public class OrdersController {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
         Order orderVal = order.get();
-        if (role.get().getName().equals(RoleNames.Huckster)) {
+        if (role.equals(Role.Huckster)) {
             orderVal.setAcceptedUserId(null);
             orderVal.setStatusId(OrderStatusIds.NewOrder);
 
@@ -87,7 +76,7 @@ public class OrdersController {
                     orderVal.getCreatedUserId(),
                     orderVal.getId()));
         }
-        if (role.get().getName().equals(RoleNames.Stalker)) {
+        if (role.equals(Role.Stalker)) {
             orderVal.setAssignedUserId(null);
             orderVal.setSuggestedUserId(null);
             orderVal.setStatusId(OrderStatusIds.AcceptedByHuckster);
@@ -109,7 +98,7 @@ public class OrdersController {
         String userId = (String) getContext().getAuthentication().getPrincipal();
 
         Optional<User> user = userRepository.findById(Long.parseLong(userId));
-        Optional<Role> role = roleRepository.findById(user.get().getRoleId());
+        String role = user.get().getRole();
 
         Optional<Order> order = orderRepository.findById(id);
 
@@ -117,7 +106,7 @@ public class OrdersController {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
         Order orderVal = order.get();
-        if (role.get().getName().equals(RoleNames.Huckster)) {
+        if (role.equals(Role.Huckster)) {
             orderVal.setAcceptedUserId(user.get().getId());
             orderVal.setStatusId(OrderStatusIds.AcceptedByHuckster);
 
@@ -125,7 +114,7 @@ public class OrdersController {
                     orderVal.getCreatedUserId(),
                     orderVal.getId()));
         }
-        if (role.get().getName().equals(RoleNames.Stalker)) {
+        if (role.equals(Role.Stalker)) {
             orderVal.setAssignedUserId(user.get().getId());
             orderVal.setSuggestedUserId(null);
             orderVal.setStatusId(OrderStatusIds.AcceptedByStalker);
@@ -155,8 +144,7 @@ public class OrdersController {
         orderRepository.save(order);
 
         try {
-            Role hucksterRole = roleRepository.findByName(RoleNames.Huckster);
-            Iterable<User> hucksters = userRepository.findByRole(hucksterRole.getId());
+            Iterable<User> hucksters = userRepository.findByRole(Role.Huckster);
 
             for(User user: hucksters){
                 notificationRepository.save(new Notification("Был создан новый заказ!",
@@ -186,20 +174,19 @@ public class OrdersController {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Optional<User> user = userRepository.findById(Long.parseLong(userId));
-        Optional<Role> role = roleRepository.findById(user.get().getRoleId());
+        String role = user.get().getRole();
 
-        Iterable<Order> orders = null;
-        String name = role.get().getName();
+        Iterable<IOrderResult> orders = null;
 
-        if (role.get().getName().equals(RoleNames.Client)) {
+        if (role.equals(Role.Client)) {
             orders = orderRepository.findByCreatedUserId(Long.parseLong(userId));
         }
 
-        if (role.get().getName().equals(RoleNames.Stalker)) {
+        if (role.equals(Role.Stalker)) {
             orders = orderRepository.findByAssignedUserId(Long.parseLong(userId));
         }
 
-        if (role.get().getName().equals(RoleNames.Huckster)) {
+        if (role.equals(Role.Huckster)) {
             orders = orderRepository.findByAcceptedUserId(Long.parseLong(userId));
         }
 
@@ -208,8 +195,15 @@ public class OrdersController {
         }
 
         ArrayList<OrderResponse> response = new ArrayList<>();
-        for (Order order : orders) {
-            response.add(GetOrder(order.getId()));
+        for (IOrderResult order : orders) {
+            response.add(new OrderResponse(
+                    order.getOrder(),
+                    order.getCreatedUser(),
+                    order.getAcceptedUser(),
+                    order.getAssignedUser(),
+                    order.getStatus(),
+                    order.getArtifact()
+            ));
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -221,30 +215,19 @@ public class OrdersController {
             return null;
         }
 
-        User createdUser = null;
-        if (order.get().getCreatedUserId() != null) {
-            createdUser = userRepository.findById(order.get().getCreatedUserId()).orElse(null);
-        }
-        User acceptedUser = null;
-        if (order.get().getAcceptedUserId() != null) {
-            acceptedUser = userRepository.findById(order.get().getAcceptedUserId()).orElse(null);
-        }
-        User assignedUser = null;
-        if (order.get().getAssignedUserId() != null) {
-            assignedUser = userRepository.findById(order.get().getAssignedUserId()).orElse(null);
-        }
-        Optional<OrderStatus> status = orderStatusRepository.findById(order.get().getStatusId());
+        User createdUser = order.get().getCreatedUser();
+        User acceptedUser = order.get().getAcceptedUser();
+        User assignedUser = order.get().getAssignedUser();
+        OrderStatus status = order.get().getStatus();
+        Artifact artifact = order.get().getArtifact();
 
-        Artifact artifact = artifactRepository.findById(order.get().getArtifactId()).get();
-
-        OrderResponse response = new OrderResponse(
+        return new OrderResponse(
                 order.get(),
-                createdUser,
-                acceptedUser,
-                assignedUser,
-                status.get(),
-                artifact);
-        return response;
+                order.get().getCreatedUser(),
+                order.get().getAcceptedUser(),
+                order.get().getAssignedUser(),
+                order.get().getStatus(),
+                order.get().getArtifact());
     }
 
     @GetMapping("/available")
@@ -252,13 +235,13 @@ public class OrdersController {
         String userId = (String) getContext().getAuthentication().getPrincipal();
 
         Optional<User> user = userRepository.findById(Long.parseLong(userId));
-        Optional<Role> role = roleRepository.findById(user.get().getRoleId());
+        String role = user.get().getRole();
 
-        Iterable<Order> orders = null;
-        if (Objects.equals(role.get().getName(), RoleNames.Huckster)) {
-            orders = orderRepository.findOrderByStatus(OrderStatusIds.NewOrder);
+        Iterable<IOrderResult> orders = null;
+        if (Objects.equals(role, Role.Huckster)) {
+            orders  = (orderRepository.findOrderByStatus(OrderStatusIds.NewOrder));
         }
-        if (Objects.equals(role.get().getName(), RoleNames.Stalker)) {
+        if (Objects.equals(role, Role.Stalker)) {
             orders = orderRepository.findSuggestedOrders(Long.parseLong(userId));
         }
 
@@ -267,8 +250,14 @@ public class OrdersController {
         }
 
         ArrayList<OrderResponse> response = new ArrayList<>();
-        for (Order order : orders) {
-            response.add(GetOrder(order.getId()));
+        for (IOrderResult order : orders) {
+            response.add(new OrderResponse(
+                    order.getOrder(),
+                    order.getCreatedUser(),
+                    order.getAcceptedUser(),
+                    order.getAssignedUser(),
+                    order.getStatus(),
+                    order.getArtifact()));
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);

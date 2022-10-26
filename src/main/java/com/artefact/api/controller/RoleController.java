@@ -16,7 +16,7 @@ public class RoleController {
 
     @GetMapping
     public ResponseEntity<Iterable<String>> getAllRoles() {
-        Iterable<String> roles = Arrays.asList(Role.ALL);
+        var roles = Arrays.asList(Role.ALL);
         return new ResponseEntity<>(roles, HttpStatus.OK);
     }
 }

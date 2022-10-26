@@ -32,6 +32,7 @@ public class SecurityConfig {
             .cors()
             .and()
             .authorizeHttpRequests()
+            .antMatchers("/images/**").permitAll()
             .antMatchers("/api/auth/**").permitAll()
             .antMatchers("/api/roles/**").permitAll()
             .anyRequest().authenticated()

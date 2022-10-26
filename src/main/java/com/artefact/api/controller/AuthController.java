@@ -33,12 +33,13 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<Object> Register(@RequestBody RegisterRequest request) {
-        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+
+        var existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
             return new ResponseEntity<>("Пользователь с таким email уже существует", HttpStatus.BAD_REQUEST);
         }
 
-        String role = request.getRole();
+        var role = request.getRole();
         if (role == null) {
             return new ResponseEntity<>("Переданная роль не найдена", HttpStatus.BAD_REQUEST);
         }
@@ -47,7 +48,7 @@ public class AuthController {
             return new ResponseEntity<>("Переданная роль не найдена", HttpStatus.BAD_REQUEST);
         }
 
-        User user = new User();
+        var user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(role);

@@ -34,4 +34,4 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 }
 
-targetCompatibility = JavaVersion.VERSION_16
+targetCompatibility = JavaVersion.VERSION_17

@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.artefact'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '1.8'
+sourceCompatibility = "17"
 
 configurations {
 	compileOnly {
@@ -34,3 +34,4 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 }
 
+targetCompatibility = JavaVersion.VERSION_16

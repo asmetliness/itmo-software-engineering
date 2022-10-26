@@ -25,24 +25,24 @@ public class UserController {
     @GetMapping("/current")
     public ResponseEntity<UserResponse> getUserDetails() {
 
-        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        User user = userRepository.findById(Long.parseLong(userId)).get();
+        var user = userRepository.findById(Long.parseLong(userId)).get();
         return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
     }
 
     @GetMapping("/stalkers")
     public ResponseEntity<Iterable<User>> getAllStalkers() {
-        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        User user = userRepository.findById(Long.parseLong(userId)).get();
-        String role = user.getRole();
+        var user = userRepository.findById(Long.parseLong(userId)).get();
+        var role = user.getRole();
 
         if (!role.equals(Role.Huckster)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
         }
 
-        Iterable<User> users = userRepository.findByRole(Role.Stalker);
+        var users = userRepository.findByRole(Role.Stalker);
 
         return new ResponseEntity<>(users, HttpStatus.OK);
     }

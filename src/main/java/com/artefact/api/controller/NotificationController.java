@@ -3,6 +3,7 @@ package com.artefact.api.controller;
 import com.artefact.api.model.Notification;
 import com.artefact.api.repository.NotificationRepository;
 import com.artefact.api.response.NotificationResponse;
+import com.artefact.api.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,16 +26,16 @@ public class NotificationController {
 
     @GetMapping("")
     public ResponseEntity<Iterable<NotificationResponse>> getNotifications() {
-        String userId = (String) getContext().getAuthentication().getPrincipal();
+        var userId = (String) getContext().getAuthentication().getPrincipal();
 
-        Iterable<Notification> userNotifications = notificationRepository.findByUserId(Long.parseLong(userId));
+        var userNotifications = notificationRepository.findByUserId(Long.parseLong(userId));
 
-        ArrayList<NotificationResponse> result = new ArrayList<>();
+        var result = Streams.from(userNotifications)
+                .map(notification -> new NotificationResponse(notification.isWasRead(), notification.getMessage(), notification.getOrderId()))
+                .toList();
 
-        for(Notification notification: userNotifications) {
-            result.add(new NotificationResponse(notification.isWasRead(), notification.getMessage(), notification.getOrderId()));
-            notification.setWasRead(true);
-        }
+        userNotifications.forEach(n -> n.setWasRead(true));
+
         notificationRepository.saveAll(userNotifications);
 
         return new ResponseEntity<>(result, HttpStatus.OK);

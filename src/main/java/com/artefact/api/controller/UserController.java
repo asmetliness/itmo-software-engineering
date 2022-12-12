@@ -10,9 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -55,7 +53,7 @@ public class UserController {
     }
 
     // TODO: Проверить
-    @GetMapping("/image/upload")
+    @PostMapping("/image/upload")
     public ResponseEntity<String> uploadUserImage(@RequestBody UploadUserImage request) {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -76,7 +74,7 @@ public class UserController {
         }
 
         String format = contentType.substring("image/".length()); // Достаем формат изображения
-        String fileName = FileNameGenerator.generateFileName(user.getId(), format);
+        String fileName = FileNameGenerator.generateFileName(format);
 
         File file = new File(UserController.RelativeImagesPath + fileName);
         try {
@@ -93,7 +91,7 @@ public class UserController {
         return new ResponseEntity<>("Ок", HttpStatus.OK);
     }
 
-    @GetMapping("/image/delete")
+    @DeleteMapping("/image/delete")
     public ResponseEntity<String> removeUserImage() {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 

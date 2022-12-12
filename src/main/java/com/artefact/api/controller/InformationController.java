@@ -75,10 +75,10 @@ public class InformationController {
         long userId = Long.parseLong(userIdStr);
 
         Optional<User> user = userRepository.findById(userId);
-        String role = user.get().getRole();
+        Role role = user.get().getRole();
 
         Iterable<Information> information;
-        if (role.equals(Role.Informer)) {
+        if (role == Role.Informer) {
             information = infoRepository.findByCreatedUser(userId);
         } else {
             information = infoRepository.findByAcceptedUser(userId);

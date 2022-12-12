@@ -1,5 +1,6 @@
 package com.artefact.api.model;
 
+import com.artefact.api.consts.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
@@ -26,7 +27,7 @@ public class User {
     private String nickname;
 
     @Column(name = "role")
-    private String role;
+    private Role role;
 
     @Column(name = "password_hash")
     @JsonIgnore

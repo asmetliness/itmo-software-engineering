@@ -1,6 +1,5 @@
 package com.artefact.api.controller;
 
-import com.artefact.api.consts.Role;
 import com.artefact.api.model.User;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.LoginRequest;
@@ -41,10 +40,6 @@ public class AuthController {
 
         var role = request.getRole();
         if (role == null) {
-            return new ResponseEntity<>("Переданная роль не найдена", HttpStatus.BAD_REQUEST);
-        }
-
-        if (!Role.isPresent(role)) {
             return new ResponseEntity<>("Переданная роль не найдена", HttpStatus.BAD_REQUEST);
         }
 

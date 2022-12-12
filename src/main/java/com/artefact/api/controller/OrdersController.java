@@ -178,9 +178,9 @@ public class OrdersController {
         var role = user.get().getRole();
 
         var orders = switch (role) {
-            case Role.Client -> orderRepository.findByCreatedUserId(Long.parseLong(userId));
-            case Role.Stalker -> orderRepository.findByAssignedUserId(Long.parseLong(userId));
-            case Role.Huckster -> orderRepository.findByAcceptedUserId(Long.parseLong(userId));
+            case Client -> orderRepository.findByCreatedUserId(Long.parseLong(userId));
+            case Stalker -> orderRepository.findByAssignedUserId(Long.parseLong(userId));
+            case Huckster -> orderRepository.findByAcceptedUserId(Long.parseLong(userId));
             default -> new ArrayList<IOrderResult>();
         };
 
@@ -220,8 +220,8 @@ public class OrdersController {
         var role = user.get().getRole();
 
         var orders = switch (role) {
-            case Role.Huckster -> orderRepository.findOrderByStatus(OrderStatusIds.NewOrder);
-            case Role.Stalker -> orderRepository.findSuggestedOrders(Long.parseLong(userId));
+            case Huckster -> orderRepository.findOrderByStatus(OrderStatusIds.NewOrder);
+            case Stalker -> orderRepository.findSuggestedOrders(Long.parseLong(userId));
             default -> new ArrayList<IOrderResult>();
         };
 

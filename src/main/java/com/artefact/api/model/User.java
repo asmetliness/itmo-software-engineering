@@ -1,7 +1,6 @@
 package com.artefact.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -32,4 +31,7 @@ public class User {
     @Column(name = "password_hash")
     @JsonIgnore
     private String passwordHash;
+
+    @Column(name = "image_path")
+    private String imagePath;
 }

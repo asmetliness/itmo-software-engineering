@@ -17,4 +17,7 @@ public class Artifact {
 
     @Column
     private double price;
+
+    @Column(name = "image_path")
+    private String imagePath;
 }

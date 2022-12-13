@@ -31,7 +31,7 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<Object> Register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<Object> register(@RequestBody RegisterRequest request) {
 
         var existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
@@ -55,7 +55,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Object> Login(@RequestBody LoginRequest request) {
+    public ResponseEntity<Object> login(@RequestBody LoginRequest request) {
         Optional<User> user = userRepository.findByEmail(request.getEmail());
         if (!user.isPresent()) {
             return new ResponseEntity<>("Пользователь не найден!", HttpStatus.NOT_FOUND);

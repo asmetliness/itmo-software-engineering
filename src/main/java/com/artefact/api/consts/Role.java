@@ -6,4 +6,5 @@ public enum Role {
     Huckster,
     Informer,
     WeaponDealer,
+    Courier
 }

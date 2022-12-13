@@ -61,6 +61,14 @@ public class Order {
     private Long suggestedUserId;
 
     @JsonIgnore
+    @ManyToOne(targetEntity = User.class)
+    @JoinColumn(name="accepted_courier_id", insertable = false, updatable = false)
+    private User acceptedCourier;
+
+    @Column(name = "accepted_courier_id")
+    private Long acceptedCourierId;
+
+    @JsonIgnore
     @ManyToOne(targetEntity = OrderStatus.class, optional = false)
     @JoinColumn(name="status_id", nullable = false, insertable = false, updatable = false)
     private OrderStatus status;

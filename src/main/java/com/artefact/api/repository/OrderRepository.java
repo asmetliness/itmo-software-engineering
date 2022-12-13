@@ -12,26 +12,28 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public interface OrderRepository extends PagingAndSortingRepository<Order, Long> {
     String BaseOrderQuery = "Select " +
-            "o, " +
-            "s," +
-            "a," +
-            "cu," +
-            "au," +
-            "asu," +
-            "su " +
-            "from Order o " +
-            "join OrderStatus s on o.statusId = s.id " +
-            "join Artifact a on o.artifactId = a.id " +
-            "join User cu on o.createdUserId = cu.id " +
-            "left join User au on o.acceptedUserId = au.id " +
-            "left join User asu on o.assignedUserId = asu.id " +
-            "left join User su on o.suggestedUserId = su.id ";
+            "order, " +
+            "status," +
+            "artifact," +
+            "createdUser," +
+            "acceptedUser," +
+            "assignedUser," +
+            "suggestedUser, " +
+            "acceptedCourier " +
+            "from Order order " +
+            "join OrderStatus status on order.statusId = status.id " +
+            "join Artifact artifact on order.artifactId = artifact.id " +
+            "join User createdUser on order.createdUserId = createdUser.id " +
+            "left join User acceptedUser on order.acceptedUserId = acceptedUser.id " +
+            "left join User assignedUser on order.assignedUserId = assignedUser.id " +
+            "left join User suggestedUser on order.suggestedUserId = suggestedUser.id " +
+            "left join User acceptedCourier on order.acceptedCourierId = acceptedCourier.id";
 
-    String ByCreatedUserQuery     = BaseOrderQuery + " where o.createdUserId = :userId";
-    String ByAssignedUserQuery    = BaseOrderQuery + " where o.assignedUserId = :userId";
-    String ByAcceptedUserQuery    = BaseOrderQuery + " where o.acceptedUserId = :userId";
-    String ByOrderStatusQuery     = BaseOrderQuery + " where o.statusId = :statusId";
-    String BySuggestedUserQuery   = BaseOrderQuery + " where o.suggestedUserId = :userId";
+    String ByCreatedUserQuery     = BaseOrderQuery + " where order.createdUserId = :userId";
+    String ByAssignedUserQuery    = BaseOrderQuery + " where order.assignedUserId = :userId";
+    String ByAcceptedUserQuery    = BaseOrderQuery + " where order.acceptedUserId = :userId";
+    String ByOrderStatusQuery     = BaseOrderQuery + " where order.statusId = :statusId";
+    String BySuggestedUserQuery   = BaseOrderQuery + " where order.suggestedUserId = :userId";
 
 
     @Query(ByCreatedUserQuery)
@@ -48,5 +50,6 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, Long>
 
     @Query(BySuggestedUserQuery)
     Iterable<IOrderResult> findSuggestedOrders(@Param("userId") long userId);
+
 }
 

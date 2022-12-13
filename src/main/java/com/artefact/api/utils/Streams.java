@@ -1,4 +1,4 @@
-package com.artefact.api.util;
+package com.artefact.api.utils;
 
 import java.util.stream.StreamSupport;
 

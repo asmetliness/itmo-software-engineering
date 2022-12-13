@@ -3,8 +3,10 @@ package com.artefact.api.controller;
 import com.artefact.api.consts.Role;
 import com.artefact.api.model.User;
 import com.artefact.api.repository.UserRepository;
-import com.artefact.api.request.UploadUserImage;
+import com.artefact.api.request.UpdateUserRequest;
+import com.artefact.api.request.UploadUserImageRequest;
 import com.artefact.api.response.UserResponse;
+import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.FileNameGenerator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+
+import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 @Controller
 @RequestMapping("/api/users")
@@ -29,35 +34,56 @@ public class UserController {
 
     @GetMapping("/current")
     public ResponseEntity<UserResponse> getUserDetails() {
+        var userId = Auth.UserId(getContext());
+        var user = userRepository.findById(userId).get();
+        return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
+    }
 
-        var userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        var user = userRepository.findById(Long.parseLong(userId)).get();
+    @PutMapping("/current")
+    public ResponseEntity<UserResponse> updateUserDetails(UpdateUserRequest request) {
+        var userId = Auth.UserId(getContext());
+        var user = userRepository.findById(userId).get();
+
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setMiddleName(request.getMiddleName());
+        user.setNickname(request.getNickname());
+
+        userRepository.save(user);
+
         return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
     }
 
     @GetMapping("/stalkers")
     public ResponseEntity<Iterable<User>> getAllStalkers() {
-        var userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return getUsersByRole(Role.Courier, new Role[]{Role.Huckster});
+    }
 
-        var user = userRepository.findById(Long.parseLong(userId)).get();
-        var role = user.getRole();
+    @GetMapping("/couriers")
+    public ResponseEntity<Iterable<User>> getAllCouriers() {
+        return getUsersByRole(Role.Courier, new Role[]{Role.Huckster, Role.WeaponDealer});
+    }
 
-        if (!role.equals(Role.Huckster)) {
+    private ResponseEntity<Iterable<User>> getUsersByRole(Role selectRole, Role[] requiredRoles) {
+        var userId = Auth.UserId(getContext());
+        var user = userRepository.findById(userId).get();
+
+        if (!Arrays.stream(requiredRoles).anyMatch(r -> r.equals(user.getRole()))) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
         }
 
-        var users = userRepository.findByRole(Role.Stalker);
+        var users = userRepository.findByRole(selectRole);
 
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
     // TODO: Проверить
     @PostMapping("/image/upload")
-    public ResponseEntity<String> uploadUserImage(@RequestBody UploadUserImage request) {
-        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<String> uploadUserImage(@RequestBody UploadUserImageRequest request) {
+        var userId = Auth.UserId(getContext());
 
-        User user = userRepository.findById(Long.parseLong(userId)).get();
+        User user = userRepository.findById(userId).get();
 
         MultipartFile image = request.getImage();
         if (image == null) {
@@ -93,9 +119,9 @@ public class UserController {
 
     @DeleteMapping("/image/delete")
     public ResponseEntity<String> removeUserImage() {
-        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var userId = Auth.UserId(getContext());
 
-        User user = userRepository.findById(Long.parseLong(userId)).get();
+        User user = userRepository.findById(userId).get();
 
         String imagePath = user.getImagePath();
         if (imagePath == null) {

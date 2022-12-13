@@ -8,7 +8,8 @@ import com.artefact.api.repository.results.IOrderResult;
 import com.artefact.api.request.CreateOrderRequest;
 import com.artefact.api.request.SuggestOrderRequest;
 import com.artefact.api.response.OrderResponse;
-import com.artefact.api.util.Streams;
+import com.artefact.api.utils.Auth;
+import com.artefact.api.utils.Streams;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,11 +17,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
@@ -43,27 +39,26 @@ public class OrdersController {
 
 
     @PostMapping("/suggest")
-    public ResponseEntity<Object> SuggestOrder(@RequestBody SuggestOrderRequest request) {
-        var userId = (String) getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<Object> suggestOrder(@RequestBody SuggestOrderRequest request) {
 
         var order = orderRepository.findById(request.getOrderId());
 
         var orderVal = order.get();
-        orderVal.setSuggestedUserId(request.getStalkerId());
+        orderVal.setSuggestedUserId(request.getUserId());
         orderRepository.save(orderVal);
 
         notificationRepository.save(new Notification("Вам был предложен заказ!",
-                request.getStalkerId(),
+                request.getUserId(),
                 request.getOrderId()));
 
-        return GetOrderResponse(request.getOrderId());
+        return getOrderResponse(request.getOrderId());
     }
 
     @PostMapping("/decline/{id}")
-    public ResponseEntity<Object> DeclineOrder(@PathVariable("id") long id) {
-        var userId = (String) getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<Object> declineOrder(@PathVariable("id") long id) {
+        var userId = Auth.UserId(getContext());
 
-        var user = userRepository.findById(Long.parseLong(userId));
+        var user = userRepository.findById(userId);
         var role = user.get().getRole();
 
         var order = orderRepository.findById(id);
@@ -88,20 +83,26 @@ public class OrdersController {
             notificationRepository.save(new Notification("Заказ был отклонен сталкером!",
                     orderVal.getAcceptedUserId(),
                     orderVal.getId()));
-            
-            notificationRepository.save(new Notification("Заказ был отклонен сталкером!",
-                    orderVal.getCreatedUserId(),
+        }
+
+        if(role.equals(Role.Courier)) {
+            orderVal.setSuggestedUserId(null);
+            orderVal.setAcceptedCourierId(null);
+
+            notificationRepository.save(new Notification("Заказ был отклонен курьером!",
+                    orderVal.getAcceptedUserId(),
                     orderVal.getId()));
         }
+
         orderRepository.save(orderVal);
-        return GetOrderResponse(id);
+        return getOrderResponse(id);
     }
 
     @PostMapping("/accept/{id}")
-    public ResponseEntity<Object> AcceptOrder(@PathVariable("id") long id) {
-        var userId = (String) getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<Object> acceptOrder(@PathVariable("id") long id) {
+        var userId = Auth.UserId(getContext());
 
-        var user = userRepository.findById(Long.parseLong(userId));
+        var user = userRepository.findById(userId);
         var role = user.get().getRole();
 
         var order = orderRepository.findById(id);
@@ -133,17 +134,32 @@ public class OrdersController {
                     orderVal.getCreatedUserId(),
                     orderVal.getId()));
         }
+
+        if(role.equals(Role.Courier)) {
+            orderVal.setAcceptedCourierId(user.get().getId());
+            orderVal.setSuggestedUserId(null);
+            orderVal.setStatusId(OrderStatusIds.Sent);
+
+            notificationRepository.save(new Notification("Заказ был передан курьеру!",
+                    orderVal.getAcceptedUserId(),
+                    orderVal.getId()));
+
+            notificationRepository.save(new Notification("Заказ был передан курьеру!",
+                    orderVal.getCreatedUserId(),
+                    orderVal.getId()));
+        }
+
         orderRepository.save(orderVal);
-        return GetOrderResponse(id);
+        return getOrderResponse(id);
     }
 
     @PostMapping
-    public ResponseEntity<Object> CreateOrder(@RequestBody CreateOrderRequest request) {
-        var userId = (String) getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<Object> createOrder(@RequestBody CreateOrderRequest request) {
+        var userId = Auth.UserId(getContext());
 
         var order = new Order();
         order.setArtifactId(request.getArtifactId());
-        order.setCreatedUserId(Long.parseLong(userId));
+        order.setCreatedUserId(userId);
         order.setStatusId(OrderStatusIds.NewOrder);
         order.setPrice(request.getPrice());
 
@@ -156,11 +172,11 @@ public class OrdersController {
                 .toList();
         notificationRepository.saveAll(notifications);
 
-        return GetOrderResponse(order.getId());
+        return getOrderResponse(order.getId());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> GetOrderResponse(@PathVariable("id") Long id) {
+    public ResponseEntity<Object> getOrderResponse(@PathVariable("id") Long id) {
 
         var response = GetOrder(id);
         if (response == null) {
@@ -171,16 +187,16 @@ public class OrdersController {
     }
 
     @GetMapping
-    public ResponseEntity<Iterable<OrderResponse>> GetOrderList() {
-        var userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<Iterable<OrderResponse>> getOrderList() {
+        var userId = Auth.UserId(getContext());
 
-        var user = userRepository.findById(Long.parseLong(userId));
+        var user = userRepository.findById(userId);
         var role = user.get().getRole();
 
         var orders = switch (role) {
-            case Client -> orderRepository.findByCreatedUserId(Long.parseLong(userId));
-            case Stalker -> orderRepository.findByAssignedUserId(Long.parseLong(userId));
-            case Huckster -> orderRepository.findByAcceptedUserId(Long.parseLong(userId));
+            case Client -> orderRepository.findByCreatedUserId(userId);
+            case Stalker -> orderRepository.findByAssignedUserId(userId);
+            case Huckster -> orderRepository.findByAcceptedUserId(userId);
             default -> new ArrayList<IOrderResult>();
         };
 
@@ -213,18 +229,16 @@ public class OrdersController {
     }
 
     @GetMapping("/available")
-    public ResponseEntity<Iterable<OrderResponse>> GetAvailableOrders() {
-        String userId = (String) getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<Iterable<OrderResponse>> getAvailableOrders() {
+        var userId = Auth.UserId(getContext());
 
-        var user = userRepository.findById(Long.parseLong(userId));
-        var role = user.get().getRole();
+        var user = userRepository.findById(userId);
 
-        var orders = switch (role) {
+        var orders = switch (user.get().getRole()) {
             case Huckster -> orderRepository.findOrderByStatus(OrderStatusIds.NewOrder);
-            case Stalker -> orderRepository.findSuggestedOrders(Long.parseLong(userId));
+            case Stalker, Courier -> orderRepository.findSuggestedOrders(userId);
             default -> new ArrayList<IOrderResult>();
         };
-
         var response = Streams.from(orders)
                 .map(order -> new OrderResponse(
                         order.getOrder(),

@@ -2,7 +2,6 @@ package com.artefact.api.controller;
 
 import com.artefact.api.model.Artifact;
 import com.artefact.api.repository.ArtifactRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

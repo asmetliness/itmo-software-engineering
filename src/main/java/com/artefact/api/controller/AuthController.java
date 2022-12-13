@@ -1,6 +1,5 @@
 package com.artefact.api.controller;
 
-import com.artefact.api.consts.Role;
 import com.artefact.api.model.User;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.LoginRequest;
@@ -32,7 +31,7 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<Object> Register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<Object> register(@RequestBody RegisterRequest request) {
 
         var existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
@@ -41,10 +40,6 @@ public class AuthController {
 
         var role = request.getRole();
         if (role == null) {
-            return new ResponseEntity<>("Переданная роль не найдена", HttpStatus.BAD_REQUEST);
-        }
-
-        if (!Role.isPresent(role)) {
             return new ResponseEntity<>("Переданная роль не найдена", HttpStatus.BAD_REQUEST);
         }
 
@@ -60,7 +55,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Object> Login(@RequestBody LoginRequest request) {
+    public ResponseEntity<Object> login(@RequestBody LoginRequest request) {
         Optional<User> user = userRepository.findByEmail(request.getEmail());
         if (!user.isPresent()) {
             return new ResponseEntity<>("Пользователь не найден!", HttpStatus.NOT_FOUND);

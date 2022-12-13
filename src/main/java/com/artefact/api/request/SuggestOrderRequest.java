@@ -14,5 +14,5 @@ import java.util.Date;
 @ToString
 public class SuggestOrderRequest {
     private long orderId;
-    private long stalkerId;
+    private long userId;
 }

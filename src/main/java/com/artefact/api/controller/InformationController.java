@@ -1,12 +1,13 @@
 package com.artefact.api.controller;
 
 import com.artefact.api.consts.OrderStatusIds;
-import com.artefact.api.consts.Role;
 import com.artefact.api.model.Information;
-import com.artefact.api.model.User;
 import com.artefact.api.repository.*;
-import com.artefact.api.request.CreateInformationOrder;
+import com.artefact.api.repository.results.IInformationResult;
+import com.artefact.api.request.CreateInformationRequest;
+import com.artefact.api.request.UpdateInformationRequest;
 import com.artefact.api.response.InformationResponse;
+import com.artefact.api.utils.Auth;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Optional;
+import java.util.Objects;
 
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
@@ -33,11 +34,11 @@ public class InformationController {
     }
 
     @PostMapping
-    public ResponseEntity<InformationResponse> CreateInformation(@RequestBody CreateInformationOrder request) {
-        String userId = (String) getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<InformationResponse> createInformation(@RequestBody CreateInformationRequest request) {
+        var userId = Auth.UserId(getContext());
 
         Information info = new Information();
-        info.setCreatedUserId(Long.parseLong(userId));
+        info.setCreatedUserId(userId);
         info.setStatusId(OrderStatusIds.NewOrder);
         info.setTitle(request.getTitle());
         info.setDescription(request.getDescription());
@@ -47,96 +48,126 @@ public class InformationController {
 
         infoRepository.save(info);
 
-        return GetInformation(info.getId());
+        return getInformation(info.getId());
+    }
+
+    @PutMapping
+    public ResponseEntity<InformationResponse> updateInformation(@RequestBody UpdateInformationRequest request) {
+        var userId = Auth.UserId(getContext());
+        var information = infoRepository.findById(request.getId());
+        if(information.isEmpty()) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+        var info = information.get();
+        if(info.getCreatedUserId() != userId){
+            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        }
+        if(info.getStatusId() != OrderStatusIds.NewOrder) {
+            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        }
+        info.setTitle(request.getTitle());
+        info.setDescription(request.getDescription());
+        info.setInformation(request.getInformation());
+        info.setPrice(request.getPrice());
+
+        infoRepository.save(info);
+
+        return getInformation(info.getId());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Iterable<InformationResponse>> deleteInformation(@PathVariable long id) {
+        var userId = Auth.UserId(getContext());
+        var information = infoRepository.findById(id);
+
+        if(information.isEmpty()) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+        var info = information.get();
+        if(info.getCreatedUserId() != userId) {
+            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        }
+        if(info.getStatusId() != OrderStatusIds.NewOrder) {
+            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        }
+        infoRepository.deleteById(id);
+
+        return getInformationList();
     }
 
     @GetMapping("/available")
-    public ResponseEntity<Iterable<InformationResponse>> GetAvailableList() {
-        Iterable<Information> information = infoRepository.findAllNotAccepted();
-        return GetIterableResponseEntity(information, true);
+    public ResponseEntity<Iterable<InformationResponse>> getAvailableList() {
+        var information = infoRepository.findAllNotAccepted();
+        return getIterableResponseEntity(information, true);
     }
 
-    private ResponseEntity<Iterable<InformationResponse>> GetIterableResponseEntity(Iterable<Information> information, Boolean hideInfo) {
-        ArrayList<InformationResponse> response = new ArrayList<>();
-        for (Information info : information) {
-            InformationResponse info_response = GetInformation(info.getId()).getBody();
-            if(hideInfo) {
-                info_response.setInformation(null);
-            }
-            response.add(info_response);
-        }
+    private ResponseEntity<Iterable<InformationResponse>> getIterableResponseEntity(Iterable<IInformationResult> information, Boolean hideInfo) {
 
+        var response = new ArrayList<InformationResponse>();
+        for (var info : information) {
+            if(hideInfo) {
+                info.getInformation().setInformation(null);
+            }
+            response.add(new InformationResponse(
+                    info.getInformation(),
+                    info.getCreatedUser(),
+                    info.getAcceptedUser()
+            ));
+        }
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping
-    public ResponseEntity<Iterable<InformationResponse>> GetInformationList() {
-        String userIdStr = (String) getContext().getAuthentication().getPrincipal();
-        long userId = Long.parseLong(userIdStr);
+    public ResponseEntity<Iterable<InformationResponse>> getInformationList() {
+        var userId = Auth.UserId(getContext());
 
-        Optional<User> user = userRepository.findById(userId);
-        String role = user.get().getRole();
+        var user = userRepository.findById(userId);
 
-        Iterable<Information> information;
-        if (role.equals(Role.Informer)) {
-            information = infoRepository.findByCreatedUser(userId);
-        } else {
-            information = infoRepository.findByAcceptedUser(userId);
-        }
+        var information = switch (user.get().getRole()) {
+            case Informer -> infoRepository.findByCreatedUser(userId);
+            case Stalker -> infoRepository.findByAcceptedUser(userId);
+            default -> new ArrayList<IInformationResult>();
+        };
 
-        return GetIterableResponseEntity(information, false);
+        return getIterableResponseEntity(information, false);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<InformationResponse> GetInformation(@PathVariable Long id) {
-        String userIdStr = (String) getContext().getAuthentication().getPrincipal();
-        Long userId = Long.parseLong(userIdStr);
+    public ResponseEntity<InformationResponse> getInformation(@PathVariable Long id) {
+        var userId = Auth.UserId(getContext());
 
-        Optional<Information> infoOpt = infoRepository.findById(id);
-        if (!infoOpt.isPresent())
+        var infoOpt = infoRepository.findById(id);
+        if (infoOpt.isEmpty())
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
 
-        Information info = infoOpt.get();
-        Optional<User> createdUser = userRepository.findById(info.getCreatedUserId()); // Not nullabel
-        User acceptedUser = null;
-        if(info.getAcceptedUserId() != null) {
-            acceptedUser = userRepository.findById(info.getAcceptedUserId()).orElse(null);
-        }
+        var info = infoOpt.get();
 
-        if(info.getAcceptedUserId() != userId && info.getCreatedUserId() != userId) {
+        if(!Objects.equals(info.getAcceptedUserId(), userId) && !Objects.equals(info.getCreatedUserId(), userId)) {
             info.setInformation(null);
         }
-
-        InformationResponse response = new InformationResponse(
-                info.getId(),
-                info.getTitle(),
-                info.getDescription(),
-                info.getInformation(),
-                info.getPrice(),
-                info.getCreationDate(),
-                createdUser.get(),
-                acceptedUser
+        var response = new InformationResponse(
+                info,
+                info.getCreatedUser(),
+                info.getAcceptedUser()
         );
-
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/buy/{id}")
-    public ResponseEntity<InformationResponse> BuyInformation(@PathVariable Long id) {
-        String userIdStr = (String) getContext().getAuthentication().getPrincipal();
-        long userId = Long.parseLong(userIdStr);
+    public ResponseEntity<InformationResponse> buyInformation(@PathVariable Long id) {
+        var userId = Auth.UserId(getContext());
 
-        Optional<Information> infoOpt = infoRepository.findById(id);
-        if (!infoOpt.isPresent())
+        var infoOpt = infoRepository.findById(id);
+        if (infoOpt.isEmpty())
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
 
-        Information info = infoOpt.get();
+        var info = infoOpt.get();
         if (info.getCreatedUserId() == userId) // Запрещаем покупать человеку, который этот заказ создал
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
 
         info.setAcceptedUserId(userId);
         infoRepository.save(info);
 
-        return GetInformation(info.getId());
+        return getInformation(info.getId());
     }
 }

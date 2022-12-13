@@ -1,5 +1,6 @@
 package com.artefact.api.repository;
 
+import com.artefact.api.consts.Role;
 import com.artefact.api.model.User;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -21,5 +22,5 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
     Optional<User> findByEmail(@Param("email") String email);
 
     @Query(ByRoleQuery)
-    Iterable<User> findByRole(@Param("role") String role);
+    Iterable<User> findByRole(@Param("role") Role role);
 }

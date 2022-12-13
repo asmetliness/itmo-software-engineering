@@ -9,7 +9,7 @@ import lombok.ToString;
 @Setter
 @AllArgsConstructor
 @ToString
-public class CreateInformationOrder {
+public class CreateInformationRequest {
     private String title;
     private String description;
     private String information; // Информацию, которую купили. Отдавать только при покупке.

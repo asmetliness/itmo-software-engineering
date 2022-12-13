@@ -8,4 +8,5 @@ public class OrderStatusIds {
     public static long TransferredToHuckster = 5;
     public static long Sent = 6;
     public static long Completed = 7;
+    public static long Cancelled = 8;
 }

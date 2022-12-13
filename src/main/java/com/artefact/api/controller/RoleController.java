@@ -15,8 +15,8 @@ public class RoleController {
     public RoleController() {}
 
     @GetMapping
-    public ResponseEntity<Iterable<String>> getAllRoles() {
-        var roles = Arrays.asList(Role.ALL);
-        return new ResponseEntity<>(roles, HttpStatus.OK);
+    public ResponseEntity<Iterable<Role>> getAllRoles() {
+        var stream = Arrays.stream(Role.values());
+        return new ResponseEntity<>(stream.toList(), HttpStatus.OK);
     }
 }

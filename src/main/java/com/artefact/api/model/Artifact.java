@@ -17,4 +17,10 @@ public class Artifact {
 
     @Column
     private double price;
+
+    @Column(name = "image_path")
+    private String imagePath;
+
+    @Column(name="average_days")
+    private int averageDays;
 }

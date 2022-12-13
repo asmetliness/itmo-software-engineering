@@ -8,6 +8,6 @@ public final class Auth {
 
     public static long UserId(SecurityContext context) {
         var userId = (String) getContext().getAuthentication().getPrincipal();
-        return userId;
+        return Long.parseLong(userId);
     }
 }

@@ -1,4 +1,4 @@
-insert INTO order_status (id, name)
+insert INTO status (id, name)
 VALUES
     (8, 'Отменен');
 

@@ -2,7 +2,6 @@ package com.artefact.api.security;
 
 import com.artefact.api.model.User;
 import com.artefact.api.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,15 +13,18 @@ import java.util.Optional;
 
 @Component
 public class JwtUserDetailService implements UserDetailsService {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    public JwtUserDetailService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
 
         Optional<User> userRes = userRepository.findById(Long.parseLong(userId));
 
-        if (!userRes.isPresent())
+        if (userRes.isEmpty())
             throw new UsernameNotFoundException("Could not findUser with id = " + userId);
         User user = userRes.get();
 

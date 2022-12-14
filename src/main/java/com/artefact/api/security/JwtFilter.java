@@ -2,7 +2,6 @@ package com.artefact.api.security;
 
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,10 +17,13 @@ import java.io.IOException;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
-    @Autowired
-    private JwtUserDetailService userDetailsService;
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUserDetailService userDetailsService;
+    private final JwtUtil jwtUtil;
+
+    public JwtFilter(JwtUserDetailService userDetailsService, JwtUtil jwtUtil) {
+        this.userDetailsService = userDetailsService;
+        this.jwtUtil = jwtUtil;
+    }
 
     @Override
     protected void doFilterInternal(

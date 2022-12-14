@@ -1,4 +1,4 @@
-CREATE TABLE order_status
+CREATE TABLE status
 (
     id BIGSERIAL PRIMARY KEY,
     name TEXT
@@ -18,11 +18,11 @@ create table orders
     accepted_user_id BIGINT NULL REFERENCES users(id),
     assigned_user_id BIGINT NULL REFERENCES users(id),
     suggested_user_id BIGINT NULL REFERENCES users(id),
-    status_id BIGINT REFERENCES order_status(id)
+    status_id BIGINT REFERENCES status(id)
 
 );
 
-insert INTO order_status (id, name)
+insert INTO status (id, name)
 VALUES
     (1, 'Новый заказ'),
     (2, 'Принят барыгой'),

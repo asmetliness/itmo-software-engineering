@@ -199,14 +199,7 @@ public class OrdersController {
             default -> new ArrayList<IOrderResult>();
         };
 
-        var response = Streams.from(orders).map(order -> new OrderResponse(
-                order.getOrder(),
-                order.getCreatedUser(),
-                order.getAcceptedUser(),
-                order.getAssignedUser(),
-                order.getStatus(),
-                order.getArtifact()
-        )).toList();
+        var response = Streams.from(orders).map(OrderResponse::new).toList();
 
 
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -218,13 +211,7 @@ public class OrdersController {
             return null;
         }
 
-        return new OrderResponse(
-                order.get(),
-                order.get().getCreatedUser(),
-                order.get().getAcceptedUser(),
-                order.get().getAssignedUser(),
-                order.get().getStatus(),
-                order.get().getArtifact());
+        return new OrderResponse(order.get());
     }
 
     @GetMapping("/available")
@@ -239,14 +226,7 @@ public class OrdersController {
             default -> new ArrayList<IOrderResult>();
         };
         var response = Streams.from(orders)
-                .map(order -> new OrderResponse(
-                        order.getOrder(),
-                        order.getCreatedUser(),
-                        order.getAcceptedUser(),
-                        order.getAssignedUser(),
-                        order.getStatus(),
-                        order.getArtifact())
-                ).toList();
+                .map(OrderResponse::new).toList();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

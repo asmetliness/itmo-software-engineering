@@ -55,14 +55,14 @@ public class OrdersController {
 
     @PostMapping("/decline/{id}")
     public ResponseEntity<Object> declineOrder(@PathVariable("id") long id) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var user = userRepository.findById(userId);
         var role = user.get().getRole();
 
         var order = orderRepository.findById(id);
 
-        if (!order.isPresent()) {
+        if (order.isEmpty()) {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
         var orderVal = order.get();
@@ -99,14 +99,14 @@ public class OrdersController {
 
     @PostMapping("/accept/{id}")
     public ResponseEntity<Object> acceptOrder(@PathVariable("id") long id) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var user = userRepository.findById(userId);
         var role = user.get().getRole();
 
         var order = orderRepository.findById(id);
 
-        if (!order.isPresent()) {
+        if (order.isEmpty()) {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
         Order orderVal = order.get();
@@ -154,7 +154,7 @@ public class OrdersController {
 
     @PostMapping
     public ResponseEntity<Object> createOrder(@RequestBody CreateOrderRequest request) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var order = new Order();
         order.setArtifactId(request.getArtifactId());
@@ -187,7 +187,7 @@ public class OrdersController {
 
     @GetMapping
     public ResponseEntity<Iterable<OrderResponse>> getOrderList() {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var user = userRepository.findById(userId);
         var role = user.get().getRole();
@@ -229,7 +229,7 @@ public class OrdersController {
 
     @GetMapping("/available")
     public ResponseEntity<Iterable<OrderResponse>> getAvailableOrders() {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var user = userRepository.findById(userId);
 

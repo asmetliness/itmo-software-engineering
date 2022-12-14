@@ -10,7 +10,6 @@ import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.FileNameGenerator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,7 +33,7 @@ public class UserController {
 
     @GetMapping("/current")
     public ResponseEntity<UserResponse> getUserDetails() {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
         return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
     }
@@ -42,7 +41,7 @@ public class UserController {
 
     @PutMapping("/current")
     public ResponseEntity<UserResponse> updateUserDetails(UpdateUserRequest request) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
 
         user.setFirstName(request.getFirstName());
@@ -66,10 +65,10 @@ public class UserController {
     }
 
     private ResponseEntity<Iterable<User>> getUsersByRole(Role selectRole, Role[] requiredRoles) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
 
-        if (!Arrays.stream(requiredRoles).anyMatch(r -> r.equals(user.getRole()))) {
+        if (Arrays.stream(requiredRoles).noneMatch(r -> r.equals(user.getRole()))) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
         }
 
@@ -81,7 +80,7 @@ public class UserController {
     // TODO: Проверить
     @PostMapping("/image/upload")
     public ResponseEntity<String> uploadUserImage(@RequestBody UploadUserImageRequest request) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         User user = userRepository.findById(userId).get();
 
@@ -119,7 +118,7 @@ public class UserController {
 
     @DeleteMapping("/image/delete")
     public ResponseEntity<String> removeUserImage() {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         User user = userRepository.findById(userId).get();
 

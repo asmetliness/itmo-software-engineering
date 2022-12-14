@@ -6,7 +6,7 @@ import static org.springframework.security.core.context.SecurityContextHolder.ge
 
 public final class Auth {
 
-    public static long userId(SecurityContext context) {
+    public static long userId() {
         var userId = (String) getContext().getAuthentication().getPrincipal();
         return Long.parseLong(userId);
     }

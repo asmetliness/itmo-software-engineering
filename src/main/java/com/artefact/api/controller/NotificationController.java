@@ -23,7 +23,7 @@ public class NotificationController {
 
     @GetMapping("")
     public ResponseEntity<Iterable<NotificationResponse>> getNotifications() {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var userNotifications = notificationRepository.findByUserId(userId);
 

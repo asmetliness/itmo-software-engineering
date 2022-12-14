@@ -4,8 +4,6 @@ import com.artefact.api.model.Artifact;
 import com.artefact.api.model.Order;
 import com.artefact.api.model.Status;
 import com.artefact.api.model.User;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 
 public interface IOrderResult {

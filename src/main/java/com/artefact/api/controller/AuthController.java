@@ -57,7 +57,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestBody LoginRequest request) {
         Optional<User> user = userRepository.findByEmail(request.getEmail());
-        if (!user.isPresent()) {
+        if (user.isEmpty()) {
             return new ResponseEntity<>("Пользователь не найден!", HttpStatus.NOT_FOUND);
         }
         if (!passwordEncoder.matches(request.getPassword(), user.get().getPasswordHash())) {

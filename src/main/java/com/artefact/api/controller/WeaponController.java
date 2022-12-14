@@ -6,7 +6,6 @@ import com.artefact.api.consts.StatusIds;
 import com.artefact.api.model.Weapon;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.repository.WeaponRepository;
-import com.artefact.api.repository.results.IOrderResult;
 import com.artefact.api.repository.results.IWeaponResult;
 import com.artefact.api.request.CreateWeaponRequest;
 import com.artefact.api.request.UpdateWeaponRequest;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 @Controller
@@ -38,7 +36,7 @@ public class WeaponController {
 
     @PostMapping
     public ResponseEntity<Object> createWeapon(@RequestBody CreateWeaponRequest request) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var user = userRepository.findById(userId).get();
         if(!user.getRole().equals(Role.WeaponDealer)) {
@@ -59,7 +57,7 @@ public class WeaponController {
 
     @PutMapping
     public ResponseEntity<Object> updateWeapon(@RequestBody UpdateWeaponRequest request) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var weaponOpt = weaponRepository.findById(request.getId());
         if(weaponOpt.isEmpty()) {
@@ -83,7 +81,7 @@ public class WeaponController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteWeapon(@PathVariable long id) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var weapon = weaponRepository.findById(id);
         if(weapon.isEmpty() || !weapon.get().getCreatedUserId().equals(userId)) {
@@ -97,7 +95,7 @@ public class WeaponController {
 
     @GetMapping
     public ResponseEntity<Object> getWeapons() {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var user = userRepository.findById(userId).get();
 
@@ -130,7 +128,7 @@ public class WeaponController {
 
     @GetMapping("/requested")
     public ResponseEntity<Object> getSuggestedWeapons() {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
 
         var weapons = switch (user.getRole()) {
@@ -158,7 +156,7 @@ public class WeaponController {
 
     @PostMapping("/request/{id}")
     public ResponseEntity<Object> requestWeapon(@PathVariable long id) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
 
         if(!user.getRole().equals(Role.Stalker)) {
@@ -180,7 +178,7 @@ public class WeaponController {
 
     @PostMapping("/confirm/{id}")
     public ResponseEntity<Object> confirmWeapon(@PathVariable long id) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
         var weaponOpt = weaponRepository.findById(id);
         if(weaponOpt.isEmpty()) {
             return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
@@ -201,7 +199,7 @@ public class WeaponController {
 
     @PostMapping("/decline/{id}")
     public ResponseEntity<Object> declineWeapon(@PathVariable long id) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
         var weaponOpt = weaponRepository.findById(id);
         if(weaponOpt.isEmpty()) {
             return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);

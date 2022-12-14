@@ -35,7 +35,7 @@ public class InformationController {
 
     @PostMapping
     public ResponseEntity<InformationResponse> createInformation(@RequestBody CreateInformationRequest request) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         Information info = new Information();
         info.setCreatedUserId(userId);
@@ -53,7 +53,7 @@ public class InformationController {
 
     @PutMapping
     public ResponseEntity<InformationResponse> updateInformation(@RequestBody UpdateInformationRequest request) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
         var information = infoRepository.findById(request.getId());
         if(information.isEmpty()) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -77,7 +77,7 @@ public class InformationController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Iterable<InformationResponse>> deleteInformation(@PathVariable long id) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
         var information = infoRepository.findById(id);
 
         if(information.isEmpty()) {
@@ -119,7 +119,7 @@ public class InformationController {
 
     @GetMapping
     public ResponseEntity<Iterable<InformationResponse>> getInformationList() {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var user = userRepository.findById(userId);
 
@@ -134,7 +134,7 @@ public class InformationController {
 
     @GetMapping("/{id}")
     public ResponseEntity<InformationResponse> getInformation(@PathVariable Long id) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var infoOpt = infoRepository.findById(id);
         if (infoOpt.isEmpty())
@@ -155,7 +155,7 @@ public class InformationController {
 
     @PostMapping("/buy/{id}")
     public ResponseEntity<InformationResponse> buyInformation(@PathVariable Long id) {
-        var userId = Auth.userId(getContext());
+        var userId = Auth.userId();
 
         var infoOpt = infoRepository.findById(id);
         if (infoOpt.isEmpty())

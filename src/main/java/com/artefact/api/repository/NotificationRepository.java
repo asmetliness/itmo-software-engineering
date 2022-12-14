@@ -1,6 +1,5 @@
 package com.artefact.api.repository;
 
-import com.artefact.api.model.Artifact;
 import com.artefact.api.model.Notification;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;

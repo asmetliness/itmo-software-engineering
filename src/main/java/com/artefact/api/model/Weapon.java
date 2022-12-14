@@ -19,7 +19,7 @@ public class Weapon {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = true)
+    @Column()
     private String description;
 
     @Column(nullable = false)
@@ -36,21 +36,21 @@ public class Weapon {
     @JoinColumn(name="created_user_id", nullable = false, insertable = false, updatable = false)
     private User createdUser;
 
-    @Column(nullable = true, name = "requested_user_id")
+    @Column(name = "requested_user_id")
     private Long requestedUserId;
     @JsonIgnore
     @ManyToOne(targetEntity = User.class)
     @JoinColumn(name="requested_user_id", nullable = false, insertable = false, updatable = false)
     private User requestedUser;
 
-    @Column(nullable = true, name = "acquired_user_id")
+    @Column(name = "acquired_user_id")
     private Long acquiredUserId;
     @JsonIgnore
     @ManyToOne(targetEntity = User.class)
     @JoinColumn(name="acquired_user_id", nullable = false, insertable = false, updatable = false)
     private User acquiredUser;
 
-    @Column(nullable = true, name = "suggested_courier_id")
+    @Column(name = "suggested_courier_id")
     private Long suggestedCourierId;
 
     @JsonIgnore
@@ -58,7 +58,7 @@ public class Weapon {
     @JoinColumn(name="suggested_courier_id", nullable = false, insertable = false, updatable = false)
     private User suggestedCourier;
 
-    @Column(nullable = true, name = "accepted_courier_id")
+    @Column(name = "accepted_courier_id")
     private Long acceptedCourierId;
 
     @JsonIgnore

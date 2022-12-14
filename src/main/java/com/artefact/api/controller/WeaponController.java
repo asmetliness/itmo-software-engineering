@@ -154,6 +154,7 @@ public class WeaponController {
     }
 
 
+    //TODO: add notifications for request, confirm, decline
     @PostMapping("/request/{id}")
     public ResponseEntity<Object> requestWeapon(@PathVariable long id) {
         var userId = Auth.userId();

@@ -21,7 +21,7 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, Long>
             "suggestedUser, " +
             "acceptedCourier " +
             "from Order order " +
-            "join OrderStatus status on order.statusId = status.id " +
+            "join Status status on order.statusId = status.id " +
             "join Artifact artifact on order.artifactId = artifact.id " +
             "join User createdUser on order.createdUserId = createdUser.id " +
             "left join User acceptedUser on order.acceptedUserId = acceptedUser.id " +

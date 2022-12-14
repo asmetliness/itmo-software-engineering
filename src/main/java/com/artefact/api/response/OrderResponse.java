@@ -11,6 +11,6 @@ public class OrderResponse {
     private User createdUser;
     private User acceptedUser;
     private User assignedUser;
-    private OrderStatus orderStatus;
+    private Status orderStatus;
     private Artifact artifact;
 }

@@ -69,9 +69,9 @@ public class Order {
     private Long acceptedCourierId;
 
     @JsonIgnore
-    @ManyToOne(targetEntity = OrderStatus.class, optional = false)
+    @ManyToOne(targetEntity = Status.class, optional = false)
     @JoinColumn(name="status_id", nullable = false, insertable = false, updatable = false)
-    private OrderStatus status;
+    private Status status;
 
     @Column(name = "status_id")
     private Long statusId;

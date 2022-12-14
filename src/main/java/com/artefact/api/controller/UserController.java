@@ -34,7 +34,7 @@ public class UserController {
 
     @GetMapping("/current")
     public ResponseEntity<UserResponse> getUserDetails() {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
         var user = userRepository.findById(userId).get();
         return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
     }
@@ -42,7 +42,7 @@ public class UserController {
 
     @PutMapping("/current")
     public ResponseEntity<UserResponse> updateUserDetails(UpdateUserRequest request) {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
         var user = userRepository.findById(userId).get();
 
         user.setFirstName(request.getFirstName());
@@ -57,7 +57,7 @@ public class UserController {
 
     @GetMapping("/stalkers")
     public ResponseEntity<Iterable<User>> getAllStalkers() {
-        return getUsersByRole(Role.Courier, new Role[]{Role.Huckster});
+        return getUsersByRole(Role.Stalker, new Role[]{Role.Huckster});
     }
 
     @GetMapping("/couriers")
@@ -66,7 +66,7 @@ public class UserController {
     }
 
     private ResponseEntity<Iterable<User>> getUsersByRole(Role selectRole, Role[] requiredRoles) {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
         var user = userRepository.findById(userId).get();
 
         if (!Arrays.stream(requiredRoles).anyMatch(r -> r.equals(user.getRole()))) {
@@ -81,7 +81,7 @@ public class UserController {
     // TODO: Проверить
     @PostMapping("/image/upload")
     public ResponseEntity<String> uploadUserImage(@RequestBody UploadUserImageRequest request) {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
 
         User user = userRepository.findById(userId).get();
 
@@ -119,7 +119,7 @@ public class UserController {
 
     @DeleteMapping("/image/delete")
     public ResponseEntity<String> removeUserImage() {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
 
         User user = userRepository.findById(userId).get();
 

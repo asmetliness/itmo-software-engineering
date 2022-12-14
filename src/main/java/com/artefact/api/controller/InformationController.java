@@ -1,6 +1,6 @@
 package com.artefact.api.controller;
 
-import com.artefact.api.consts.OrderStatusIds;
+import com.artefact.api.consts.StatusIds;
 import com.artefact.api.model.Information;
 import com.artefact.api.repository.*;
 import com.artefact.api.repository.results.IInformationResult;
@@ -35,11 +35,11 @@ public class InformationController {
 
     @PostMapping
     public ResponseEntity<InformationResponse> createInformation(@RequestBody CreateInformationRequest request) {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
 
         Information info = new Information();
         info.setCreatedUserId(userId);
-        info.setStatusId(OrderStatusIds.NewOrder);
+        info.setStatusId(StatusIds.New);
         info.setTitle(request.getTitle());
         info.setDescription(request.getDescription());
         info.setInformation(request.getInformation());
@@ -53,7 +53,7 @@ public class InformationController {
 
     @PutMapping
     public ResponseEntity<InformationResponse> updateInformation(@RequestBody UpdateInformationRequest request) {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
         var information = infoRepository.findById(request.getId());
         if(information.isEmpty()) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -62,7 +62,7 @@ public class InformationController {
         if(info.getCreatedUserId() != userId){
             return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
         }
-        if(info.getStatusId() != OrderStatusIds.NewOrder) {
+        if(info.getStatusId() != StatusIds.New) {
             return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
         }
         info.setTitle(request.getTitle());
@@ -77,7 +77,7 @@ public class InformationController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Iterable<InformationResponse>> deleteInformation(@PathVariable long id) {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
         var information = infoRepository.findById(id);
 
         if(information.isEmpty()) {
@@ -87,7 +87,7 @@ public class InformationController {
         if(info.getCreatedUserId() != userId) {
             return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
         }
-        if(info.getStatusId() != OrderStatusIds.NewOrder) {
+        if(info.getStatusId() != StatusIds.New) {
             return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
         }
         infoRepository.deleteById(id);
@@ -119,7 +119,7 @@ public class InformationController {
 
     @GetMapping
     public ResponseEntity<Iterable<InformationResponse>> getInformationList() {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
 
         var user = userRepository.findById(userId);
 
@@ -134,7 +134,7 @@ public class InformationController {
 
     @GetMapping("/{id}")
     public ResponseEntity<InformationResponse> getInformation(@PathVariable Long id) {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
 
         var infoOpt = infoRepository.findById(id);
         if (infoOpt.isEmpty())
@@ -155,7 +155,7 @@ public class InformationController {
 
     @PostMapping("/buy/{id}")
     public ResponseEntity<InformationResponse> buyInformation(@PathVariable Long id) {
-        var userId = Auth.UserId(getContext());
+        var userId = Auth.userId(getContext());
 
         var infoOpt = infoRepository.findById(id);
         if (infoOpt.isEmpty())

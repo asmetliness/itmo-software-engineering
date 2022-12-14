@@ -1,5 +1,3 @@
---TODO:
---weapon migration
 
 create table weapon (
     id BIGSERIAL PRIMARY KEY,

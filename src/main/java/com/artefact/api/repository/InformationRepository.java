@@ -15,15 +15,15 @@ public interface InformationRepository extends PagingAndSortingRepository<Inform
     String BaseQuery = "Select " +
             "information, " +
             "createdUser, " +
-            "acceptedUser " +
+            "acquiredUser " +
             "from Information information " +
             "join User createdUser on information.createdUserId = createdUser.id " +
-            "left join User acceptedUser on information.acceptedUserId = acceptedUser.id";
+            "left join User acquiredUser on information.acquiredUserId = acquiredUser.id";
 
     String FindByStatusQuery = BaseQuery + " where information.statusId = :statusId";
-    String FindByAcceptedQuery = BaseQuery + " where information.acceptedUserId = :userId";
+    String FindByAcceptedQuery = BaseQuery + " where information.acquiredUserId = :userId";
     String FindByCreatedQuery = BaseQuery + " where information.createdUserId = :userId";
-    String FindNotAcceptedQuery = BaseQuery + " where information.acceptedUserId is null";
+    String FindNotAcceptedQuery = BaseQuery + " where information.acquiredUserId is null";
 
 
     @Query(FindByStatusQuery)

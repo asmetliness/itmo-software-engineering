@@ -142,13 +142,13 @@ public class InformationController {
 
         var info = infoOpt.get();
 
-        if(!Objects.equals(info.getAcceptedUserId(), userId) && !Objects.equals(info.getCreatedUserId(), userId)) {
+        if(!Objects.equals(info.getAcquiredUserId(), userId) && !Objects.equals(info.getCreatedUserId(), userId)) {
             info.setInformation(null);
         }
         var response = new InformationResponse(
                 info,
                 info.getCreatedUser(),
-                info.getAcceptedUser()
+                info.getAcquiredUser()
         );
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -165,7 +165,7 @@ public class InformationController {
         if (info.getCreatedUserId() == userId) // Запрещаем покупать человеку, который этот заказ создал
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
 
-        info.setAcceptedUserId(userId);
+        info.setAcquiredUserId(userId);
         infoRepository.save(info);
 
         return getInformation(info.getId());

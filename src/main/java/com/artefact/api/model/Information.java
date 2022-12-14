@@ -37,13 +37,13 @@ public class Information {
     @JoinColumn(name="created_user_id", nullable = false, insertable = false, updatable = false)
     private User createdUser;
 
-    @Column(name = "accepted_user_id")
-    private Long acceptedUserId; // Кто купил
+    @Column(name = "acquired_user_id")
+    private Long acquiredUserId; // Кто купил
 
     @JsonIgnore
     @ManyToOne(targetEntity = User.class)
-    @JoinColumn(name="accepted_user_id", insertable = false, updatable = false)
-    private User acceptedUser;
+    @JoinColumn(name="acquired_user_id", insertable = false, updatable = false)
+    private User acquiredUser;
 
     @Column(name = "status_id", nullable = false)
     private Long statusId; // Мб не нужно, т.к. если `acceptedUserId` не null, то значит, что кто-то инфу купил. B статус не нужон

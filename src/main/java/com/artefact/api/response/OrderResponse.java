@@ -12,8 +12,11 @@ public class OrderResponse {
     private User createdUser;
     private User acceptedUser;
     private User assignedUser;
+    private User acceptedCourier;
+
     private Status orderStatus;
     private Artifact artifact;
+
 
     public OrderResponse(IOrderResult orderResult) {
         order = orderResult.getOrder();
@@ -22,6 +25,7 @@ public class OrderResponse {
         assignedUser = orderResult.getAssignedUser();
         orderStatus = orderResult.getStatus();
         artifact = orderResult.getArtifact();
+        acceptedCourier = orderResult.getAcceptedCourier();
     }
 
     public OrderResponse(Order order) {
@@ -31,5 +35,6 @@ public class OrderResponse {
         assignedUser = order.getAssignedUser();
         orderStatus = order.getStatus();
         artifact = order.getArtifact();
+        acceptedCourier = order.getAcceptedCourier();
     }
 }

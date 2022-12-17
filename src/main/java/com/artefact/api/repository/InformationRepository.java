@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 public interface InformationRepository extends PagingAndSortingRepository<Information, Long> {
 
     String BaseQuery = "Select " +
-            "information, " +
-            "createdUser, " +
-            "acquiredUser " +
+            "information as information, " +
+            "createdUser as createdUser, " +
+            "acquiredUser as acquiredUser " +
             "from Information information " +
             "join User createdUser on information.createdUserId = createdUser.id " +
             "left join User acquiredUser on information.acquiredUserId = acquiredUser.id";

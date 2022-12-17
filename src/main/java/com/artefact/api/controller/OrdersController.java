@@ -17,11 +17,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 
-import static org.springframework.security.core.context.SecurityContextHolder.getContext;
-
 @Controller
 @RequestMapping("/api/orders")
 public class OrdersController {
+
     private final OrderRepository orderRepository;
 
     private final UserRepository userRepository;
@@ -206,7 +205,7 @@ public class OrdersController {
     }
 
     private OrderResponse GetOrder(Long id) {
-        var order = orderRepository.findById(id);
+        var order = orderRepository.findByOrderId(id);
         if (order.isEmpty()) {
             return null;
         }

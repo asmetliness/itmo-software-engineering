@@ -14,13 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 public interface WeaponRepository extends PagingAndSortingRepository<Weapon, Long> {
 
     String BaseQuery = "Select " +
-            "weapon, " +
-            "status, " +
-            "createdUser, " +
-            "requestedUser, " +
-            "acquiredUser, " +
-            "suggestedCourier, " +
-            "acceptedCourier " +
+            "weapon as weapon, " +
+            "status as status, " +
+            "createdUser as createdUser, " +
+            "requestedUser as requestedUser, " +
+            "acquiredUser as acquiredUser, " +
+            "suggestedCourier as suggestedCourier, " +
+            "acceptedCourier as acceptedCourier " +
             "from Weapon weapon " +
             "join Status status on weapon.statusId = status.id " +
             "join User createdUser on weapon.createdUserId = createdUser.id " +

@@ -15,4 +15,6 @@ public interface IOrderResult {
     User getAcceptedUser();
     User getAssignedUser();
     User getSuggestedUser();
+
+    User getAcceptedCourier();
 }

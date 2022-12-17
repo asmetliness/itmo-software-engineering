@@ -8,18 +8,20 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Repository
 @Transactional
 public interface OrderRepository extends PagingAndSortingRepository<Order, Long> {
     String BaseOrderQuery = "Select " +
-            "order, " +
-            "status," +
-            "artifact," +
-            "createdUser," +
-            "acceptedUser," +
-            "assignedUser," +
-            "suggestedUser, " +
-            "acceptedCourier " +
+            "order as order, " +
+            "status as status, " +
+            "artifact as artifact, " +
+            "createdUser as createdUser, " +
+            "acceptedUser as acceptedUser, " +
+            "assignedUser as assignedUser, " +
+            "suggestedUser as suggestedUser , " +
+            "acceptedCourier as acceptedCourier " +
             "from Order order " +
             "join Status status on order.statusId = status.id " +
             "join Artifact artifact on order.artifactId = artifact.id " +
@@ -35,6 +37,10 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, Long>
     String ByOrderStatusQuery     = BaseOrderQuery + " where order.statusId = :statusId";
     String BySuggestedUserQuery   = BaseOrderQuery + " where order.suggestedUserId = :userId";
 
+    String ByOrderId              = BaseOrderQuery + " where order.id = :orderId";
+
+    @Query(ByOrderId)
+    Optional<IOrderResult> findByOrderId(@Param("orderId") long orderId);
 
     @Query(ByCreatedUserQuery)
     Iterable<IOrderResult> findByCreatedUserId(@Param("userId") long userId);

@@ -1,5 +1,6 @@
 package com.artefact.api.controller;
 
+import com.artefact.api.consts.Role;
 import com.artefact.api.consts.StatusIds;
 import com.artefact.api.model.Information;
 import com.artefact.api.repository.*;
@@ -34,9 +35,13 @@ public class InformationController {
     }
 
     @PostMapping
-    public ResponseEntity<InformationResponse> createInformation(@RequestBody CreateInformationRequest request) {
+    public ResponseEntity<Object> createInformation(@RequestBody CreateInformationRequest request) {
         var userId = Auth.userId();
 
+        var user = userRepository.findById(userId).get();
+        if(!user.getRole().equals(Role.Informer)) {
+            return new ResponseEntity<>("Выставлять информацию может только информатор!", HttpStatus.FORBIDDEN);
+        }
         Information info = new Information();
         info.setCreatedUserId(userId);
         info.setStatusId(StatusIds.New);
@@ -52,19 +57,17 @@ public class InformationController {
     }
 
     @PutMapping
-    public ResponseEntity<InformationResponse> updateInformation(@RequestBody UpdateInformationRequest request) {
+    public ResponseEntity<Object> updateInformation(@RequestBody UpdateInformationRequest request) {
         var userId = Auth.userId();
         var information = infoRepository.findById(request.getId());
         if(information.isEmpty()) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Информация не найдена!", HttpStatus.BAD_REQUEST);
         }
         var info = information.get();
-        if(info.getCreatedUserId() != userId){
-            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        if(info.getCreatedUserId() != userId || info.getStatusId() != StatusIds.New){
+            return new ResponseEntity<>("Вы не можете редактировать данную информацию!", HttpStatus.FORBIDDEN);
         }
-        if(info.getStatusId() != StatusIds.New) {
-            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
-        }
+
         info.setTitle(request.getTitle());
         info.setDescription(request.getDescription());
         info.setInformation(request.getInformation());
@@ -76,49 +79,25 @@ public class InformationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Iterable<InformationResponse>> deleteInformation(@PathVariable long id) {
+    public ResponseEntity<Object> deleteInformation(@PathVariable long id) {
         var userId = Auth.userId();
         var information = infoRepository.findById(id);
 
         if(information.isEmpty()) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return getInformationList();
         }
         var info = information.get();
-        if(info.getCreatedUserId() != userId) {
-            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        if(info.getCreatedUserId() != userId || info.getStatusId() != StatusIds.New) {
+            return new ResponseEntity<>("Вы не можете удалить данную информацию!", HttpStatus.FORBIDDEN);
         }
-        if(info.getStatusId() != StatusIds.New) {
-            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
-        }
+
         infoRepository.deleteById(id);
 
         return getInformationList();
     }
 
-    @GetMapping("/available")
-    public ResponseEntity<Iterable<InformationResponse>> getAvailableList() {
-        var information = infoRepository.findAllNotAccepted();
-        return getIterableResponseEntity(information, true);
-    }
-
-    private ResponseEntity<Iterable<InformationResponse>> getIterableResponseEntity(Iterable<IInformationResult> information, Boolean hideInfo) {
-
-        var response = new ArrayList<InformationResponse>();
-        for (var info : information) {
-            if(hideInfo) {
-                info.getInformation().setInformation(null);
-            }
-            response.add(new InformationResponse(
-                    info.getInformation(),
-                    info.getCreatedUser(),
-                    info.getAcceptedUser()
-            ));
-        }
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
     @GetMapping
-    public ResponseEntity<Iterable<InformationResponse>> getInformationList() {
+    public ResponseEntity<Object> getInformationList() {
         var userId = Auth.userId();
 
         var user = userRepository.findById(userId);
@@ -133,41 +112,116 @@ public class InformationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<InformationResponse> getInformation(@PathVariable Long id) {
+    public ResponseEntity<Object> getInformation(@PathVariable Long id) {
         var userId = Auth.userId();
 
-        var infoOpt = infoRepository.findById(id);
+        var infoOpt = infoRepository.findByInformationId(id);
         if (infoOpt.isEmpty())
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Информация не найдена!", HttpStatus.NOT_FOUND);
 
         var info = infoOpt.get();
 
-        if(!Objects.equals(info.getAcquiredUserId(), userId) && !Objects.equals(info.getCreatedUserId(), userId)) {
-            info.setInformation(null);
+        if(!Objects.equals(info.getAcquiredUser().getId(), userId) && !Objects.equals(info.getCreatedUser().getId(), userId)) {
+            info.getInformation().setInformation(null);
         }
-        var response = new InformationResponse(
-                info,
-                info.getCreatedUser(),
-                info.getAcquiredUser()
-        );
+        var response = new InformationResponse(info);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PostMapping("/buy/{id}")
-    public ResponseEntity<InformationResponse> buyInformation(@PathVariable Long id) {
-        var userId = Auth.userId();
-
-        var infoOpt = infoRepository.findById(id);
-        if (infoOpt.isEmpty())
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-
-        var info = infoOpt.get();
-        if (info.getCreatedUserId() == userId) // Запрещаем покупать человеку, который этот заказ создал
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-
-        info.setAcquiredUserId(userId);
-        infoRepository.save(info);
-
-        return getInformation(info.getId());
+    @GetMapping("/available")
+    public ResponseEntity<Object> getAvailableList() {
+        var information = infoRepository.findAllNotAccepted();
+        return getIterableResponseEntity(information, true);
     }
+
+
+    @GetMapping("/requested")
+    public ResponseEntity<Object> getRequestedInformation() {
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        var info = switch (user.getRole()) {
+            case Informer -> infoRepository.findRequestedInformation(userId);
+            case Stalker -> infoRepository.findByRequestedUserId(userId);
+            default -> new ArrayList<IInformationResult>();
+        };
+
+        return getIterableResponseEntity(info, user.getRole() != Role.Informer);
+    }
+
+    @PostMapping("/request/{id}")
+    public ResponseEntity<Object> requestInformation(@PathVariable long id) {
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        if(!user.getRole().equals(Role.Stalker)) {
+            return new ResponseEntity<>("Покупка оружия доступна только сталкерам!", HttpStatus.FORBIDDEN);
+        }
+
+        var informationOpt = infoRepository.findById(id);
+        if(informationOpt.isEmpty()) {
+            return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
+        }
+
+        var information = informationOpt.get();
+        information.setRequestedUserId(userId);
+        information.setStatusId(StatusIds.Requested);
+
+        infoRepository.save(information);
+        return getInformation(id);
+    }
+
+    @PostMapping("/confirm/{id}")
+    public ResponseEntity<Object> confirmInformation(@PathVariable long id) {
+        var userId = Auth.userId();
+        var informationOpt = infoRepository.findById(id);
+        if(informationOpt.isEmpty()) {
+            return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
+        }
+        var information = informationOpt.get();
+        if(!information.getCreatedUserId().equals(userId)) {
+            return new ResponseEntity<>("Вы не можете подтвердить данный заказ", HttpStatus.FORBIDDEN);
+        }
+
+        information.setAcquiredUserId(information.getRequestedUserId());
+        information.setRequestedUserId(null);
+        information.setStatusId(StatusIds.Acquired);
+
+        infoRepository.save(information);
+
+        return getInformation(id);
+    }
+
+    @PostMapping("/decline/{id}")
+    public ResponseEntity<Object> declineInformation(@PathVariable long id) {
+        var userId = Auth.userId();
+        var informationOpt = infoRepository.findById(id);
+        if(informationOpt.isEmpty()) {
+            return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
+        }
+        var information = informationOpt.get();
+        if(!information.getCreatedUserId().equals(userId)) {
+            return new ResponseEntity<>("Вы не можете отклонить данный заказ", HttpStatus.FORBIDDEN);
+        }
+        information.setRequestedUserId(null);
+        information.setStatusId(StatusIds.New);
+        infoRepository.save(information);
+        return getInformation(id);
+    }
+
+
+
+    private ResponseEntity<Object> getIterableResponseEntity(Iterable<IInformationResult> information, Boolean hideInfo) {
+
+        var response = new ArrayList<InformationResponse>();
+        for (var info : information) {
+            if(hideInfo) {
+                info.getInformation().setInformation(null);
+            }
+            response.add(new InformationResponse(info));
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
 }

@@ -127,7 +127,7 @@ public class WeaponController {
     }
 
     @GetMapping("/requested")
-    public ResponseEntity<Object> getSuggestedWeapons() {
+    public ResponseEntity<Object> getRequestedWeapons() {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
 

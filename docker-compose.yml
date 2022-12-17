@@ -10,13 +10,13 @@ services:
       - POSTGRES_USER=artifact
       - POSTGRES_PASSWORD=artifact
       - POSTGRES_DB=artifact
-  pgAdmin:
-    image: dpage/pgadmin4:6.1
-    ports:
-      - "80:80"
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=artifact@yandex.ru
-      - PGADMIN_DEFAULT_PASSWORD=artifact
+#  pgAdmin:
+#    image: dpage/pgadmin4:6.1
+#    ports:
+#      - "80:80"
+#    environment:
+#      - PGADMIN_DEFAULT_EMAIL=artifact@yandex.ru
+#      - PGADMIN_DEFAULT_PASSWORD=artifact
 
 #  api:
 #    build:

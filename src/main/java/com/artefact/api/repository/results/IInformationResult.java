@@ -6,5 +6,7 @@ import com.artefact.api.model.User;
 public interface IInformationResult {
     Information getInformation();
     User getCreatedUser();
-    User getAcceptedUser();
+    User getAcquiredUser();
+
+    User getRequestedUser();
 }

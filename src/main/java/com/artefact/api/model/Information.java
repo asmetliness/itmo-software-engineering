@@ -37,8 +37,16 @@ public class Information {
     @JoinColumn(name="created_user_id", nullable = false, insertable = false, updatable = false)
     private User createdUser;
 
+    @Column(name = "requested_user_id")
+    private Long requestedUserId;
+
+    @JsonIgnore
+    @ManyToOne(targetEntity = User.class)
+    @JoinColumn(name="requested_user_id", nullable = false, insertable = false, updatable = false)
+    private User requestedUser;
+
     @Column(name = "acquired_user_id")
-    private Long acquiredUserId; // Кто купил
+    private Long acquiredUserId;
 
     @JsonIgnore
     @ManyToOne(targetEntity = User.class)

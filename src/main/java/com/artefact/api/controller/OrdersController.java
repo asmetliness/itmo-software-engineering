@@ -36,11 +36,40 @@ public class OrdersController {
     }
 
 
+    @PostMapping("/start/{id}")
+    public ResponseEntity<Object> startProgress(@PathVariable("id") long id) {
+        var orderOpt = orderRepository.findById(id);
+        if(orderOpt.isEmpty()) {
+            return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
+        }
+        var order = orderOpt.get();
+        order.setStatusId(StatusIds.InProgress);
+        orderRepository.save(order);
+
+        return getOrderResponse(order.getId());
+
+    }
+
+    @PostMapping("/complete/{id}")
+    public ResponseEntity<Object> completeOrder(@PathVariable("id") long id) {
+        var orderOpt = orderRepository.findById(id);
+        if(orderOpt.isEmpty()) {
+            return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
+        }
+        var order = orderOpt.get();
+        order.setStatusId(StatusIds.TransferredToHuckster);
+        orderRepository.save(order);
+
+        return getOrderResponse(order.getId());
+    }
+
     @PostMapping("/suggest")
     public ResponseEntity<Object> suggestOrder(@RequestBody SuggestOrderRequest request) {
 
         var order = orderRepository.findById(request.getOrderId());
-
+        if(order.isEmpty()) {
+            return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
+        }
         var orderVal = order.get();
         orderVal.setSuggestedUserId(request.getUserId());
         orderRepository.save(orderVal);

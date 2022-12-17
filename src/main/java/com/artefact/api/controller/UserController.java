@@ -128,9 +128,11 @@ public class UserController {
 
         var file = new File(UserController.RelativeImagesPath + imagePath);
         if (file.delete()) {
-            return new ResponseEntity<>("Внутренняя ошибка", HttpStatus.INTERNAL_SERVER_ERROR);
-        } else {
+            user.setImagePath(null);
+            userRepository.save(user);
             return getUserDetails();
+        } else {
+            return new ResponseEntity<>("Внутренняя ошибка", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

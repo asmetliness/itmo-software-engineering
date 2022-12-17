@@ -28,7 +28,7 @@ public class NotificationController {
         var userNotifications = notificationRepository.findByUserId(userId);
 
         var result = Streams.from(userNotifications)
-                .map(notification -> new NotificationResponse(notification.isWasRead(), notification.getMessage(), notification.getOrderId()))
+                .map(notification -> new NotificationResponse(notification))
                 .toList();
 
         userNotifications.forEach(n -> n.setWasRead(true));

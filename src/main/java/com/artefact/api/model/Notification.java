@@ -34,4 +34,10 @@ public class Notification {
 
     @Column(name="order_id")
     private Long orderId;
+
+    @Column(name="weapon_order_id")
+    private Long weaponOrderId;
+
+    @Column(name="information_order_id")
+    private Long informationOrderId;
 }

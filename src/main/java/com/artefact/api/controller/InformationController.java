@@ -104,7 +104,7 @@ public class InformationController {
 
         var information = switch (user.get().getRole()) {
             case Informer -> infoRepository.findByCreatedUser(userId);
-            case Stalker -> infoRepository.findByAcceptedUser(userId);
+            case Stalker -> infoRepository.findByAcquiredUser(userId);
             default -> new ArrayList<IInformationResult>();
         };
 
@@ -121,7 +121,11 @@ public class InformationController {
 
         var info = infoOpt.get();
 
-        if(!Objects.equals(info.getAcquiredUser().getId(), userId) && !Objects.equals(info.getCreatedUser().getId(), userId)) {
+        var showInfo = false;
+        showInfo |= info.getAcquiredUser() != null && info.getAcquiredUser().getId().equals(userId);
+        showInfo |= info.getCreatedUser().getId().equals(userId);
+
+        if(!showInfo) {
             info.getInformation().setInformation(null);
         }
         var response = new InformationResponse(info);
@@ -160,7 +164,7 @@ public class InformationController {
 
         var informationOpt = infoRepository.findById(id);
         if(informationOpt.isEmpty()) {
-            return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Информация не найдено!", HttpStatus.NOT_FOUND);
         }
 
         var information = informationOpt.get();
@@ -203,8 +207,12 @@ public class InformationController {
         if(!information.getCreatedUserId().equals(userId)) {
             return new ResponseEntity<>("Вы не можете отклонить данный заказ", HttpStatus.FORBIDDEN);
         }
+        if(information.getAcquiredUser() != null) {
+            return new ResponseEntity<>("Вы не можете отклонить данный заказ", HttpStatus.FORBIDDEN);
+        }
         information.setRequestedUserId(null);
         information.setStatusId(StatusIds.New);
+
         infoRepository.save(information);
         return getInformation(id);
     }

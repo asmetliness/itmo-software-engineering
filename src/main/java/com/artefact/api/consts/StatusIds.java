@@ -10,6 +10,6 @@ public class StatusIds {
     public static long Completed = 7;
     public static long Cancelled = 8;
     public static long Requested = 9;
-    public static long Acquired = 9;
+    public static long Acquired = 10;
 
 }

@@ -18,14 +18,16 @@ public interface InformationRepository extends PagingAndSortingRepository<Inform
             "information as information, " +
             "createdUser as createdUser, " +
             "acquiredUser as acquiredUser, " +
-            "requestedUser as requestedUser " +
+            "requestedUser as requestedUser, " +
+            "status as status " +
             "from Information information " +
             "join User createdUser on information.createdUserId = createdUser.id " +
+            "join Status status on information.statusId = status.id " +
             "left join User acquiredUser on information.acquiredUserId = acquiredUser.id " +
             "left join User requestedUser on information.requestedUserId = requestedUser.id";
 
     String FindByStatusQuery = BaseQuery + " where information.statusId = :statusId";
-    String FindByAcceptedQuery = BaseQuery + " where information.acquiredUserId = :userId";
+    String FindByAcquiredQuery = BaseQuery + " where information.acquiredUserId = :userId";
     String FindByCreatedQuery = BaseQuery + " where information.createdUserId = :userId";
     String FindNotAcceptedQuery = BaseQuery + " where information.acquiredUserId is null";
 
@@ -38,8 +40,8 @@ public interface InformationRepository extends PagingAndSortingRepository<Inform
     @Query(FindByStatusQuery)
     Iterable<IInformationResult> findByStatus(@Param("statusId") long statusId);
 
-    @Query(FindByAcceptedQuery)
-    Iterable<IInformationResult> findByAcceptedUser(@Param("userId") long userId);
+    @Query(FindByAcquiredQuery)
+    Iterable<IInformationResult> findByAcquiredUser(@Param("userId") long userId);
 
     @Query(FindByCreatedQuery)
     Iterable<IInformationResult> findByCreatedUser(@Param("userId") long userId);

@@ -42,7 +42,7 @@ public class Information {
 
     @JsonIgnore
     @ManyToOne(targetEntity = User.class)
-    @JoinColumn(name="requested_user_id", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name="requested_user_id", insertable = false, updatable = false)
     private User requestedUser;
 
     @Column(name = "acquired_user_id")

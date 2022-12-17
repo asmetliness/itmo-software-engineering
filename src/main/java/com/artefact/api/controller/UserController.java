@@ -4,7 +4,6 @@ import com.artefact.api.consts.Role;
 import com.artefact.api.model.User;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.UpdateUserRequest;
-import com.artefact.api.request.UploadUserImageRequest;
 import com.artefact.api.response.UserResponse;
 import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.FileNameGenerator;
@@ -16,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -32,7 +32,7 @@ public class UserController {
     }
 
     @GetMapping("/current")
-    public ResponseEntity<UserResponse> getUserDetails() {
+    public ResponseEntity<Object> getUserDetails() {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
         return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
@@ -40,7 +40,7 @@ public class UserController {
 
 
     @PutMapping("/current")
-    public ResponseEntity<UserResponse> updateUserDetails(UpdateUserRequest request) {
+    public ResponseEntity<UserResponse> updateUserDetails(@RequestBody UpdateUserRequest request) {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
 
@@ -79,31 +79,30 @@ public class UserController {
 
     // TODO: Проверить
     @PostMapping("/image/upload")
-    public ResponseEntity<String> uploadUserImage(@RequestBody UploadUserImageRequest request) {
+    public ResponseEntity<Object> uploadUserImage(@RequestParam("image") MultipartFile image) {
         var userId = Auth.userId();
 
-        User user = userRepository.findById(userId).get();
+        var user = userRepository.findById(userId).get();
 
-        MultipartFile image = request.getImage();
         if (image == null) {
             return new ResponseEntity<>("Изображение отсутствует", HttpStatus.BAD_REQUEST);
         }
 
-        String contentType = image.getContentType();
+        var contentType = image.getContentType();
         if (contentType == null) {
             return new ResponseEntity<>("Неизвестный contentType", HttpStatus.BAD_REQUEST);
         }
 
-        if (contentType.equals("image/jpeg") || contentType.equals("image/png")) {
-            return new ResponseEntity<>("Неподдерживаемый формат изображений", HttpStatus.BAD_REQUEST);
-        }
+        var format = contentType.substring("image/".length()); // Достаем формат изображения
+        var fileName = FileNameGenerator.generateFileName(format);
 
-        String format = contentType.substring("image/".length()); // Достаем формат изображения
-        String fileName = FileNameGenerator.generateFileName(format);
-
-        File file = new File(UserController.RelativeImagesPath + fileName);
+        var resultPath = Paths.get(UserController.RelativeImagesPath + fileName).toAbsolutePath();
+        var folder = new File(UserController.RelativeImagesPath);
         try {
-            image.transferTo(file);
+            if(!folder.exists()) {
+                folder.mkdirs();
+            }
+            image.transferTo(resultPath);
         } catch (IOException exp) {
             return new ResponseEntity<>("Внутренняя ошибка", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -113,25 +112,25 @@ public class UserController {
         user.setImagePath(fileName);
         userRepository.save(user);
 
-        return new ResponseEntity<>("Ок", HttpStatus.OK);
+        return getUserDetails();
     }
 
     @DeleteMapping("/image/delete")
-    public ResponseEntity<String> removeUserImage() {
+    public ResponseEntity<Object> removeUserImage() {
         var userId = Auth.userId();
 
-        User user = userRepository.findById(userId).get();
+        var user = userRepository.findById(userId).get();
 
-        String imagePath = user.getImagePath();
+        var imagePath = user.getImagePath();
         if (imagePath == null) {
             return new ResponseEntity<>("Изображение отсутствует", HttpStatus.BAD_REQUEST);
         }
 
-        File file = new File(UserController.RelativeImagesPath + imagePath);
+        var file = new File(UserController.RelativeImagesPath + imagePath);
         if (file.delete()) {
             return new ResponseEntity<>("Внутренняя ошибка", HttpStatus.INTERNAL_SERVER_ERROR);
         } else {
-            return new ResponseEntity<>("Ок", HttpStatus.OK);
+            return getUserDetails();
         }
     }
 }

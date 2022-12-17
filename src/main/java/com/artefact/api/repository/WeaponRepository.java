@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Repository
 @Transactional
 public interface WeaponRepository extends PagingAndSortingRepository<Weapon, Long> {
@@ -35,6 +37,8 @@ public interface WeaponRepository extends PagingAndSortingRepository<Weapon, Lon
     String RequestedWeaponsQuery = BaseQuery + " where weapon.createdUserId = :userId AND weapon.requestedUserId is not null";
     String ByRequestedUserQuery = BaseQuery + " where weapon.requestedUserId = :userId";
 
+    String ByWeaponIdQuery = BaseQuery + " where weapon.id = :id";
+
     @Query(ByCreatedUserQuery)
     Iterable<IWeaponResult> findByCreatedUserId(@Param("userId") long userId);
 
@@ -49,4 +53,7 @@ public interface WeaponRepository extends PagingAndSortingRepository<Weapon, Lon
 
     @Query(ByRequestedUserQuery)
     Iterable<IWeaponResult> findByRequestedUserId(@Param("userId") long userId);
+
+    @Query(ByWeaponIdQuery)
+    Optional<IWeaponResult> findByWeaponId(@Param("id") long id);
 }

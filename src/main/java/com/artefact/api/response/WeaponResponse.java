@@ -4,11 +4,11 @@ package com.artefact.api.response;
 import com.artefact.api.model.Status;
 import com.artefact.api.model.User;
 import com.artefact.api.model.Weapon;
+import com.artefact.api.repository.results.IWeaponResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
 public class WeaponResponse {
 
     private Weapon weapon;
@@ -19,8 +19,8 @@ public class WeaponResponse {
     private User acceptedCourier;
     private Status status;
 
-    public WeaponResponse(Weapon weapon) {
-        this.weapon = weapon;
+    public WeaponResponse(IWeaponResult weapon) {
+        this.weapon = weapon.getWeapon();
         this.createdUser = weapon.getCreatedUser();
         this.requestedUser = weapon.getRequestedUser();
         this.acquiredUser = weapon.getAcquiredUser();

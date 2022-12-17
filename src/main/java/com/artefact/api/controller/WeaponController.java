@@ -49,10 +49,11 @@ public class WeaponController {
         weapon.setPrice(request.getPrice());
         weapon.setCreatedUserId(userId);
         weapon.setCreationDate(new Date());
+        weapon.setStatusId(StatusIds.New);
 
         weaponRepository.save(weapon);
 
-        return new ResponseEntity<>(new WeaponResponse(weapon), HttpStatus.OK);
+        return getWeaponById(weapon.getId());
     }
 
     @PutMapping
@@ -76,7 +77,7 @@ public class WeaponController {
         weapon.setPrice(request.getPrice());
 
         weaponRepository.save(weapon);
-        return new ResponseEntity<>(new WeaponResponse(weapon), HttpStatus.OK);
+        return getWeaponById(weapon.getId());
     }
 
     @DeleteMapping("/{id}")
@@ -111,7 +112,7 @@ public class WeaponController {
     @GetMapping("/{id}")
     public ResponseEntity<Object> getWeaponById(@PathVariable long id) {
 
-        var weaponOpt = weaponRepository.findById(id);
+        var weaponOpt = weaponRepository.findByWeaponId(id);
         if(weaponOpt.isEmpty()) {
             return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
         }
@@ -141,15 +142,7 @@ public class WeaponController {
     }
 
     private ResponseEntity<Object> mapWeapons(Iterable<IWeaponResult> weapons) {
-        var result = Streams.from(weapons).map(w -> new WeaponResponse(
-                w.getWeapon(),
-                w.getCreatedUser(),
-                w.getRequestedUser(),
-                w.getAcquiredUser(),
-                w.getSuggestedCourier(),
-                w.getAcceptedCourier(),
-                w.getStatus()
-        ));
+        var result = Streams.from(weapons).map(WeaponResponse::new);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 

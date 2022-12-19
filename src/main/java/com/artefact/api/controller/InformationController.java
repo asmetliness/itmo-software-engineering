@@ -159,7 +159,7 @@ public class InformationController {
         var user = userRepository.findById(userId).get();
 
         if(!user.getRole().equals(Role.Stalker)) {
-            return new ResponseEntity<>("Покупка оружия доступна только сталкерам!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("Покупка информации доступна только сталкерам!", HttpStatus.FORBIDDEN);
         }
 
         var informationOpt = infoRepository.findById(id);
@@ -204,12 +204,10 @@ public class InformationController {
             return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
         }
         var information = informationOpt.get();
-        if(!information.getCreatedUserId().equals(userId)) {
+        if(!information.getCreatedUserId().equals(userId) || information.getAcquiredUser() != null) {
             return new ResponseEntity<>("Вы не можете отклонить данный заказ", HttpStatus.FORBIDDEN);
         }
-        if(information.getAcquiredUser() != null) {
-            return new ResponseEntity<>("Вы не можете отклонить данный заказ", HttpStatus.FORBIDDEN);
-        }
+
         information.setRequestedUserId(null);
         information.setStatusId(StatusIds.New);
 

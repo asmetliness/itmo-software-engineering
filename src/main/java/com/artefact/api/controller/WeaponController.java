@@ -8,6 +8,8 @@ import com.artefact.api.repository.UserRepository;
 import com.artefact.api.repository.WeaponRepository;
 import com.artefact.api.repository.results.IWeaponResult;
 import com.artefact.api.request.CreateWeaponRequest;
+import com.artefact.api.request.SuggestOrderRequest;
+import com.artefact.api.request.SuggestWeaponRequest;
 import com.artefact.api.request.UpdateWeaponRequest;
 import com.artefact.api.response.WeaponResponse;
 import com.artefact.api.utils.Auth;
@@ -65,13 +67,10 @@ public class WeaponController {
             return new ResponseEntity<>("Не удалось найти оружие по указанному Id", HttpStatus.NOT_FOUND);
         }
         var weapon = weaponOpt.get();
-        if(!weapon.getCreatedUserId().equals(userId)) {
+        if(!weapon.getCreatedUserId().equals(userId) || !weapon.getStatusId().equals(StatusIds.New)) {
             return new ResponseEntity<>("Вы не можете редактировать данное оружие!", HttpStatus.FORBIDDEN);
         }
 
-        if(!weapon.getStatusId().equals(StatusIds.New)) {
-            return new ResponseEntity<>("Вы не можете редактировать данный заказ!", HttpStatus.FORBIDDEN);
-        }
         weapon.setTitle(request.getTitle());
         weapon.setDescription(request.getDescription());
         weapon.setPrice(request.getPrice());
@@ -123,7 +122,15 @@ public class WeaponController {
     @GetMapping("/available")
     public ResponseEntity<Object> getAvailableWeapons() {
 
-        var weapons = weaponRepository.findByStatusId(StatusIds.New);
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        var weapons = switch (user.getRole()) {
+            case Stalker -> weaponRepository.findByStatusId(StatusIds.New);
+            case Courier -> weaponRepository.findBySuggestedCourierId(userId);
+            default -> new ArrayList<IWeaponResult>();
+        };
+
         return mapWeapons(weapons);
     }
 
@@ -206,5 +213,35 @@ public class WeaponController {
         weapon.setStatusId(StatusIds.New);
         weaponRepository.save(weapon);
         return getWeaponById(id);
+    }
+
+
+    @PostMapping("/suggest")
+    public ResponseEntity<Object> suggestCourier(@RequestBody SuggestWeaponRequest request) {
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        if(!user.getRole().equals(Role.WeaponDealer)) {
+            return new ResponseEntity<>("Вы не можете предложить это оружие курьеру!", HttpStatus.FORBIDDEN);
+        }
+        var weaponOpt = weaponRepository.findById(request.getWeaponId());
+        if(weaponOpt.isEmpty()) {
+            return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
+        }
+        var weapon = weaponOpt.get();
+        if(!weapon.getCreatedUserId().equals(userId)) {
+            return new ResponseEntity<>("Вы не можете предложить это оружие курьеру!", HttpStatus.FORBIDDEN);
+        }
+
+        var suggestedUser = userRepository.findById(request.getUserId());
+        if(suggestedUser.isEmpty() || !suggestedUser.get().getRole().equals(Role.Courier)) {
+            return new ResponseEntity<>("Вы не можете предложить доставку этому пользователю!", HttpStatus.FORBIDDEN);
+        }
+
+        weapon.setSuggestedCourierId(request.getUserId());
+        weaponRepository.save(weapon);
+
+        return getWeaponById(request.getWeaponId());
+
     }
 }

@@ -12,4 +12,6 @@ public class StatusIds {
     public static long Requested = 9;
     public static long Acquired = 10;
 
+    public static long Delivered = 11;
+
 }

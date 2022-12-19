@@ -56,4 +56,6 @@ public interface WeaponRepository extends PagingAndSortingRepository<Weapon, Lon
 
     @Query(ByWeaponIdQuery)
     Optional<IWeaponResult> findByWeaponId(@Param("id") long id);
+
+    Iterable<IWeaponResult> findBySuggestedCourierId(@Param("userId")long userId);
 }

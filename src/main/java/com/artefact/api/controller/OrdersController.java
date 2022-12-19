@@ -16,6 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/api/orders")
@@ -38,41 +39,93 @@ public class OrdersController {
 
     @PostMapping("/start/{id}")
     public ResponseEntity<Object> startProgress(@PathVariable("id") long id) {
+
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        if(!user.getRole().equals(Role.Stalker)) {
+            return new ResponseEntity<>("Вы не можете начать процесс по данному заказу!", HttpStatus.FORBIDDEN);
+        }
         var orderOpt = orderRepository.findById(id);
         if(orderOpt.isEmpty()) {
             return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
         }
         var order = orderOpt.get();
+
+        if(!order.getAssignedUserId().equals(userId)) {
+            return new ResponseEntity<>("Вы не можете начать процесс по данному заказу!", HttpStatus.FORBIDDEN);
+        }
+
         order.setStatusId(StatusIds.InProgress);
         orderRepository.save(order);
 
         return getOrderResponse(order.getId());
-
     }
 
     @PostMapping("/complete/{id}")
     public ResponseEntity<Object> completeOrder(@PathVariable("id") long id) {
+
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
         var orderOpt = orderRepository.findById(id);
         if(orderOpt.isEmpty()) {
             return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
         }
         var order = orderOpt.get();
-        order.setStatusId(StatusIds.TransferredToHuckster);
+
+        if(!canCompleteOrder(user, order)) {
+            return new ResponseEntity<>("Вы не можете завершить данный заказ!", HttpStatus.NOT_FOUND);
+        }
+
+        if(user.getRole().equals(Role.Stalker)) {
+            order.setStatusId(StatusIds.TransferredToHuckster);
+        }
+        if(user.getRole().equals(Role.Client)) {
+            order.setStatusId(StatusIds.Completed);
+        }
         orderRepository.save(order);
 
         return getOrderResponse(order.getId());
+    }
+
+    private Boolean canCompleteOrder(User user, Order order) {
+        if(user.getRole().equals(Role.Stalker)) {
+            return order.getStatusId().equals(StatusIds.InProgress) &&
+                    order.getAcceptedUserId().equals(user.getId());
+        }
+
+        if(user.getRole().equals(Role.Client)) {
+            return order.getStatusId().equals(StatusIds.Delivered) &&
+                    order.getCreatedUserId().equals(user.getId());
+        }
+
+        return false;
     }
 
     @PostMapping("/suggest")
     public ResponseEntity<Object> suggestOrder(@RequestBody SuggestOrderRequest request) {
 
-        var order = orderRepository.findById(request.getOrderId());
-        if(order.isEmpty()) {
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        var orderOpt = orderRepository.findById(request.getOrderId());
+        if(orderOpt.isEmpty()) {
             return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
         }
-        var orderVal = order.get();
-        orderVal.setSuggestedUserId(request.getUserId());
-        orderRepository.save(orderVal);
+        var order = orderOpt.get();
+
+        if(!user.getRole().equals(Role.Huckster) || !order.getAcceptedUserId().equals(userId)) {
+            return new ResponseEntity<>("Вы не можете предлагать данный заказ!", HttpStatus.FORBIDDEN);
+        }
+        var suggestedUser = userRepository.findById(request.getUserId());
+
+        if(!canSuggestToUser(suggestedUser, order)) {
+            return new ResponseEntity<>("Вы не можете предложить заказ данному пользователю!", HttpStatus.FORBIDDEN);
+        }
+
+        order.setSuggestedUserId(request.getUserId());
+        orderRepository.save(order);
 
         notificationRepository.save(new Notification("Вам был предложен заказ!",
                 request.getUserId(),
@@ -81,108 +134,172 @@ public class OrdersController {
         return getOrderResponse(request.getOrderId());
     }
 
+    private Boolean canSuggestToUser(Optional<User> user, Order order) {
+        if(user.isEmpty()) {
+            return false;
+        }
+        if(user.get().getRole().equals(Role.Courier)) {
+            return order.getStatusId().equals(StatusIds.TransferredToHuckster);
+        }
+        if(user.get().getRole().equals(Role.Stalker)) {
+            return order.getStatusId().equals(StatusIds.AcceptedByHuckster);
+        }
+        return false;
+    }
+
     @PostMapping("/decline/{id}")
     public ResponseEntity<Object> declineOrder(@PathVariable("id") long id) {
         var userId = Auth.userId();
 
-        var user = userRepository.findById(userId);
-        var role = user.get().getRole();
+        var user = userRepository.findById(userId).get();
+        var role = user.getRole();
 
-        var order = orderRepository.findById(id);
+        var orderOpt = orderRepository.findById(id);
 
-        if (order.isEmpty()) {
+        if (orderOpt.isEmpty()) {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
-        var orderVal = order.get();
+        var order = orderOpt.get();
+
+        if(!canDeclineOrder(user, order)) {
+            return new ResponseEntity<>("Вы не можете отклонить данный заказ!", HttpStatus.FORBIDDEN);
+        }
+
         if (role.equals(Role.Huckster)) {
-            orderVal.setAcceptedUserId(null);
-            orderVal.setStatusId(StatusIds.New);
+            order.setAcceptedUserId(null);
+            order.setStatusId(StatusIds.New);
 
             notificationRepository.save(new Notification("Ваш заказ был отклонен барыгой!",
-                    orderVal.getCreatedUserId(),
-                    orderVal.getId()));
+                    order.getCreatedUserId(),
+                    order.getId()));
         }
         if (role.equals(Role.Stalker)) {
-            orderVal.setAssignedUserId(null);
-            orderVal.setSuggestedUserId(null);
-            orderVal.setStatusId(StatusIds.AcceptedByHuckster);
+            order.setAssignedUserId(null);
+            order.setSuggestedUserId(null);
+            order.setStatusId(StatusIds.AcceptedByHuckster);
 
             notificationRepository.save(new Notification("Заказ был отклонен сталкером!",
-                    orderVal.getAcceptedUserId(),
-                    orderVal.getId()));
+                    order.getAcceptedUserId(),
+                    order.getId()));
         }
 
         if(role.equals(Role.Courier)) {
-            orderVal.setSuggestedUserId(null);
-            orderVal.setAcceptedCourierId(null);
+            order.setSuggestedUserId(null);
+            order.setAcceptedCourierId(null);
+            order.setStatusId(StatusIds.TransferredToHuckster);
 
             notificationRepository.save(new Notification("Заказ был отклонен курьером!",
-                    orderVal.getAcceptedUserId(),
-                    orderVal.getId()));
+                    order.getAcceptedUserId(),
+                    order.getId()));
         }
 
-        orderRepository.save(orderVal);
+        orderRepository.save(order);
         return getOrderResponse(id);
+    }
+
+    private Boolean canDeclineOrder(User user, Order order) {
+        if(user.getRole().equals(Role.Huckster)) {
+            return order.getStatusId().equals(StatusIds.New) ||
+                    (order.getStatusId().equals(StatusIds.AcceptedByHuckster)
+                            && order.getAcceptedUserId().equals(user.getId()));
+        }
+
+        if(user.getRole().equals(Role.Stalker)) {
+            return order.getStatusId().equals(StatusIds.AcceptedByHuckster) ||
+                    (order.getStatusId().equals(StatusIds.AcceptedByStalker)
+                            && order.getAssignedUserId().equals(user.getId()));
+        }
+
+        if(user.getRole().equals(Role.Courier)) {
+            return order.getStatusId().equals(StatusIds.TransferredToHuckster) ||
+                    (order.getStatusId().equals(StatusIds.Sent) &&
+                            order.getAcceptedCourierId().equals(user.getId()));
+        }
+        return false;
     }
 
     @PostMapping("/accept/{id}")
     public ResponseEntity<Object> acceptOrder(@PathVariable("id") long id) {
         var userId = Auth.userId();
 
-        var user = userRepository.findById(userId);
-        var role = user.get().getRole();
+        var user = userRepository.findById(userId).get();
+        var role = user.getRole();
 
-        var order = orderRepository.findById(id);
+        var orderOpt = orderRepository.findById(id);
 
-        if (order.isEmpty()) {
-            return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
+        if (orderOpt.isEmpty()) {
+            return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
         }
-        Order orderVal = order.get();
+        Order order = orderOpt.get();
+
+        if(!canAcceptOrder(user, order)) {
+            return new ResponseEntity<>("Вы не можете принять данный заказ!", HttpStatus.FORBIDDEN);
+        }
 
         if (role.equals(Role.Huckster)) {
-            orderVal.setAcceptedUserId(user.get().getId());
-            orderVal.setStatusId(StatusIds.AcceptedByHuckster);
+
+            order.setAcceptedUserId(user.getId());
+            order.setStatusId(StatusIds.AcceptedByHuckster);
 
             notificationRepository.save(new Notification("Заказ был принят барыгой!",
-                    orderVal.getCreatedUserId(),
-                    orderVal.getId()));
+                    order.getCreatedUserId(),
+                    order.getId()));
         }
 
         if (role.equals(Role.Stalker)) {
-            orderVal.setAssignedUserId(user.get().getId());
-            orderVal.setSuggestedUserId(null);
-            orderVal.setStatusId(StatusIds.AcceptedByStalker);
+            order.setAssignedUserId(user.getId());
+            order.setSuggestedUserId(null);
+            order.setStatusId(StatusIds.AcceptedByStalker);
 
             notificationRepository.save(new Notification("Заказ был принят сталкером!",
-                    orderVal.getAcceptedUserId(),
-                    orderVal.getId()));
+                    order.getAcceptedUserId(),
+                    order.getId()));
 
             notificationRepository.save(new Notification("Заказ был принят сталкером!",
-                    orderVal.getCreatedUserId(),
-                    orderVal.getId()));
+                    order.getCreatedUserId(),
+                    order.getId()));
         }
 
         if(role.equals(Role.Courier)) {
-            orderVal.setAcceptedCourierId(user.get().getId());
-            orderVal.setSuggestedUserId(null);
-            orderVal.setStatusId(StatusIds.Sent);
+            order.setAcceptedCourierId(user.getId());
+            order.setSuggestedUserId(null);
+            order.setStatusId(StatusIds.Sent);
 
             notificationRepository.save(new Notification("Заказ был передан курьеру!",
-                    orderVal.getAcceptedUserId(),
-                    orderVal.getId()));
+                    order.getAcceptedUserId(),
+                    order.getId()));
 
             notificationRepository.save(new Notification("Заказ был передан курьеру!",
-                    orderVal.getCreatedUserId(),
-                    orderVal.getId()));
+                    order.getCreatedUserId(),
+                    order.getId()));
         }
 
-        orderRepository.save(orderVal);
+        orderRepository.save(order);
         return getOrderResponse(id);
+    }
+
+    private Boolean canAcceptOrder(User user, Order order) {
+        if(user.getRole().equals(Role.Huckster)) {
+            return order.getStatusId().equals(StatusIds.New);
+        }
+        if(user.getRole().equals(Role.Stalker)) {
+            return order.getStatusId().equals(StatusIds.AcceptedByHuckster)
+                    && order.getSuggestedUserId().equals(user.getId());
+        }
+        if(user.getRole().equals(Role.Courier)) {
+            return order.getStatusId().equals(StatusIds.TransferredToHuckster)
+                    && order.getSuggestedUserId().equals(user.getId());
+        }
+        return false;
     }
 
     @PostMapping
     public ResponseEntity<Object> createOrder(@RequestBody CreateOrderRequest request) {
         var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+        if(!user.getRole().equals(Role.Client)) {
+            return new ResponseEntity<>("Вы не можете создавать заказ!", HttpStatus.FORBIDDEN);
+        }
 
         var order = new Order();
         order.setArtifactId(request.getArtifactId());
@@ -195,7 +312,7 @@ public class OrdersController {
         var hucksters = userRepository.findByRole(Role.Huckster);
 
         var notifications = Streams.from(hucksters)
-                .map(user -> new Notification("Был создан заказ", user.getId(), order.getId()))
+                .map(u -> new Notification("Был создан заказ", u.getId(), order.getId()))
                 .toList();
         notificationRepository.saveAll(notifications);
 
@@ -205,12 +322,12 @@ public class OrdersController {
     @GetMapping("/{id}")
     public ResponseEntity<Object> getOrderResponse(@PathVariable("id") Long id) {
 
-        var response = GetOrder(id);
-        if (response == null) {
+        var order = orderRepository.findByOrderId(id);
+        if (order.isEmpty()) {
             return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(new OrderResponse(order.get()), HttpStatus.OK);
     }
 
     @GetMapping
@@ -233,15 +350,6 @@ public class OrdersController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    private OrderResponse GetOrder(Long id) {
-        var order = orderRepository.findByOrderId(id);
-        if (order.isEmpty()) {
-            return null;
-        }
-
-        return new OrderResponse(order.get());
-    }
-
     @GetMapping("/available")
     public ResponseEntity<Iterable<OrderResponse>> getAvailableOrders() {
         var userId = Auth.userId();
@@ -257,5 +365,27 @@ public class OrdersController {
                 .map(OrderResponse::new).toList();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/deliver/{id}")
+    public ResponseEntity<Object> deliverOrder(@PathVariable long id) {
+        var userId = Auth.userId();
+
+        var user = userRepository.findById(userId).get();
+        if(!user.getRole().equals(Role.Courier)) {
+            return new ResponseEntity<>("Вы не можете доставить данный заказ!", HttpStatus.FORBIDDEN);
+        }
+        var orderOpt = orderRepository.findById(id);
+        if(orderOpt.isEmpty()) {
+            return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
+        }
+        var order = orderOpt.get();
+        if(!order.getAcceptedCourierId().equals(userId)) {
+            return new ResponseEntity<>("Вы не можете доставить данный заказ!", HttpStatus.FORBIDDEN);
+        }
+
+        order.setStatusId(StatusIds.Delivered);
+        orderRepository.save(order);
+        return getOrderResponse(id);
     }
 }

@@ -24,7 +24,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.flywaydb:flyway-core:7.15.0'
-	implementation 'com.auth0:java-jwt:3.19.0'
+	implementation 'com.auth0:java-jwt:4.2.1'
 	implementation 'org.springframework.boot:spring-boot-starter-tomcat'
 
 	compileOnly 'org.projectlombok:lombok'

@@ -217,17 +217,12 @@ public class WeaponController {
     @PostMapping("/suggest")
     public ResponseEntity<Object> suggestCourier(@RequestBody SuggestWeaponRequest request) {
         var userId = Auth.userId();
-        var user = userRepository.findById(userId).get();
-
-        if(!user.getRole().equals(Role.WeaponDealer)) {
-            return new ResponseEntity<>("Вы не можете предложить это оружие курьеру!", HttpStatus.FORBIDDEN);
-        }
         var weaponOpt = weaponRepository.findById(request.getWeaponId());
         if(weaponOpt.isEmpty()) {
             return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
         }
         var weapon = weaponOpt.get();
-        if(!weapon.getCreatedUserId().equals(userId)) {
+        if(!weapon.getCreatedUserId().equals(userId) || !weapon.getStatusId().equals(StatusIds.Acquired)) {
             return new ResponseEntity<>("Вы не можете предложить это оружие курьеру!", HttpStatus.FORBIDDEN);
         }
 
@@ -240,6 +235,6 @@ public class WeaponController {
         weaponRepository.save(weapon);
 
         return getWeaponById(request.getWeaponId());
-
     }
+
 }

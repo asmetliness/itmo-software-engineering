@@ -1,7 +1,5 @@
 package com.artefact.api.utils;
 
-import org.springframework.security.core.context.SecurityContext;
-
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 public final class Auth {

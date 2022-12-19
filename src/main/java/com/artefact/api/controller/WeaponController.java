@@ -8,7 +8,6 @@ import com.artefact.api.repository.UserRepository;
 import com.artefact.api.repository.WeaponRepository;
 import com.artefact.api.repository.results.IWeaponResult;
 import com.artefact.api.request.CreateWeaponRequest;
-import com.artefact.api.request.SuggestOrderRequest;
 import com.artefact.api.request.SuggestWeaponRequest;
 import com.artefact.api.request.UpdateWeaponRequest;
 import com.artefact.api.response.WeaponResponse;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Date;
 
-import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 @Controller
 @RequestMapping("/api/weapon")
 public class WeaponController {

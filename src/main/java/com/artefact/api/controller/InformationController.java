@@ -16,9 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Objects;
-
-import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 @Controller
 @RequestMapping("/api/information")
@@ -121,8 +118,7 @@ public class InformationController {
 
         var info = infoOpt.get();
 
-        var showInfo = false;
-        showInfo |= info.getAcquiredUser() != null && info.getAcquiredUser().getId().equals(userId);
+        var showInfo = info.getAcquiredUser() != null && info.getAcquiredUser().getId().equals(userId);
         showInfo |= info.getCreatedUser().getId().equals(userId);
 
         if(!showInfo) {

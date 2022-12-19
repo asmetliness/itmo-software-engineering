@@ -4,7 +4,6 @@ import com.artefact.api.model.Information;
 import com.artefact.api.model.Status;
 import com.artefact.api.model.User;
 import com.artefact.api.repository.results.IInformationResult;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data

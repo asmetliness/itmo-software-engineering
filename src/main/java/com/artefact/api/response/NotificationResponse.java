@@ -1,7 +1,6 @@
 package com.artefact.api.response;
 
 import com.artefact.api.model.Notification;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data

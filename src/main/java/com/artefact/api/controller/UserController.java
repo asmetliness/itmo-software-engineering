@@ -19,8 +19,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static org.springframework.security.core.context.SecurityContextHolder.getContext;
-
 @Controller
 @RequestMapping("/api/users")
 public class UserController {

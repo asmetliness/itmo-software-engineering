@@ -37,6 +37,8 @@ public interface WeaponRepository extends PagingAndSortingRepository<Weapon, Lon
     String RequestedWeaponsQuery = BaseQuery + " where weapon.createdUserId = :userId AND weapon.requestedUserId is not null";
     String ByRequestedUserQuery = BaseQuery + " where weapon.requestedUserId = :userId";
 
+    String BySuggestedCourier = BaseQuery + " where weapon.suggestedCourierId = :userId";
+
     String ByWeaponIdQuery = BaseQuery + " where weapon.id = :id";
 
     @Query(ByCreatedUserQuery)
@@ -57,5 +59,7 @@ public interface WeaponRepository extends PagingAndSortingRepository<Weapon, Lon
     @Query(ByWeaponIdQuery)
     Optional<IWeaponResult> findByWeaponId(@Param("id") long id);
 
+
+    @Query(BySuggestedCourier)
     Iterable<IWeaponResult> findBySuggestedCourierId(@Param("userId")long userId);
 }

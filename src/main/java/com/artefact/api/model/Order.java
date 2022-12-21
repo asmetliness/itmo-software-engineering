@@ -75,4 +75,7 @@ public class Order {
 
     @Column(name = "status_id")
     private Long statusId;
+
+    @Column(name = "delivery_address")
+    private String deliveryAddress;
 }

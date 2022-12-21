@@ -73,4 +73,8 @@ public class Weapon {
     @ManyToOne(targetEntity = Status.class, optional = false)
     @JoinColumn(name="status_id", nullable = false, insertable = false, updatable = false)
     private Status status;
+
+
+    @Column(name = "delivery_address")
+    private String deliveryAddress;
 }

@@ -17,4 +17,6 @@ public class CreateOrderRequest {
     private Double price;
     @JsonFormat(pattern = "dd.MM.yyyy")
     private Date completionDate;
+
+    private String deliveryAddress;
 }

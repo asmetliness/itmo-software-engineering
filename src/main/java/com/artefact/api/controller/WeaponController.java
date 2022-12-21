@@ -10,6 +10,7 @@ import com.artefact.api.repository.results.IWeaponResult;
 import com.artefact.api.request.CreateWeaponRequest;
 import com.artefact.api.request.SuggestWeaponRequest;
 import com.artefact.api.request.UpdateWeaponRequest;
+import com.artefact.api.request.WeaponRequest;
 import com.artefact.api.response.WeaponResponse;
 import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.Streams;
@@ -154,7 +155,7 @@ public class WeaponController {
 
     //TODO: add notifications for request, confirm, decline
     @PostMapping("/request/{id}")
-    public ResponseEntity<Object> requestWeapon(@PathVariable long id) {
+    public ResponseEntity<Object> requestWeapon(@PathVariable long id, @RequestBody WeaponRequest request) {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
 
@@ -170,6 +171,7 @@ public class WeaponController {
         var weapon = weaponOpt.get();
         weapon.setRequestedUserId(userId);
         weapon.setStatusId(StatusIds.Requested);
+        weapon.setDeliveryAddress(request.getDeliveryAddress());
 
         weaponRepository.save(weapon);
         return getWeaponById(id);
@@ -209,6 +211,7 @@ public class WeaponController {
         }
         weapon.setRequestedUserId(null);
         weapon.setStatusId(StatusIds.New);
+        weapon.setDeliveryAddress(null);
         weaponRepository.save(weapon);
         return getWeaponById(id);
     }

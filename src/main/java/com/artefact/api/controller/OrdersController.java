@@ -306,7 +306,7 @@ public class OrdersController {
         order.setCreatedUserId(userId);
         order.setStatusId(StatusIds.New);
         order.setPrice(request.getPrice());
-
+        order.setDeliveryAddress(request.getDeliveryAddress());
         orderRepository.save(order);
 
         var hucksters = userRepository.findByRole(Role.Huckster);

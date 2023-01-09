@@ -58,20 +58,36 @@ class DatabaseTests {
 	}
 
 
+	//Каждую проверку нужно в отдельный метод, т.к. каждый вызов Test
+	//происходит в отдельной транзакции. Как только там появляется первое исключение,
+	//все последующие вызовы выдают ошибки, независимо от того верные они или нет
 	@Test()
-	void order_allFields_test() {
-//		//artifactId
-		orderTestHelper(DataAccessException.class, (order) -> {
+	void order_artifactId_null() {
+		orderTestHelper(DataIntegrityViolationException.class, (order) -> {
 			order.setArtifactId(null);
 		});
+	}
 
-		orderTestHelper(DataAccessException.class, (order) -> {
+	@Test
+	void order_artifactId_notExists() {
+		orderTestHelper(DataIntegrityViolationException.class, (order) -> {
 			order.setArtifactId(10000L);
 		});
+	}
 
+	@Test
+	void order_price_null() {
 		//price
-		orderTestHelper(DataAccessException.class, (order) -> {
+		orderTestHelper(DataIntegrityViolationException.class, (order) -> {
 			order.setPrice(null);
+		});
+	}
+
+	@Test
+	void order_success() {
+		Assertions.assertDoesNotThrow(() -> {
+			var order = createOrder();
+			orderRepository.save(order);
 		});
 	}
 

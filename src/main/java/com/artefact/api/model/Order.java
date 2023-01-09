@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -23,9 +24,9 @@ public class Order {
     private Long artifactId;
 
     @Column
-    private Double price;
+    private BigDecimal price;
 
-    @Column(name = "completion_date")
+    @Column(name = "completion_date", columnDefinition = "DATE")
     private Date completionDate;
 
     @JsonIgnore

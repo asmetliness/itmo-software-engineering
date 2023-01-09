@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -14,5 +16,5 @@ public class UpdateInformationRequest {
     private String title;
     private String description;
     private String information; // Информацию, которую купили. Отдавать только при покупке.
-    private Double price;
+    private BigDecimal price;
 }

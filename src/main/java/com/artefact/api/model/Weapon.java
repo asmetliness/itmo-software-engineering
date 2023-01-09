@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -23,9 +24,9 @@ public class Weapon {
     private String description;
 
     @Column(nullable = false)
-    private Double price;
+    private BigDecimal price;
 
-    @Column(nullable = false, name = "creation_date")
+    @Column(nullable = false, name = "creation_date", columnDefinition = "DATE")
     private Date creationDate;
 
     @Column(nullable = false, name = "created_user_id")

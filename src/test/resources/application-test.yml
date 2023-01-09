@@ -5,6 +5,10 @@ spring:
     username: artifact
     password: artifact
 
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
 
 server:
   port: 8080

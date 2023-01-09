@@ -3,6 +3,7 @@ package com.artefact.api.model;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 @Data
 @Entity
@@ -16,7 +17,7 @@ public class Artifact {
     private String name;
 
     @Column
-    private double price;
+    private BigDecimal price;
 
     @Column(name = "image_path")
     private String imagePath;

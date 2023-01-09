@@ -2,6 +2,7 @@ package com.artefact.api.repository;
 
 import com.artefact.api.model.Information;
 import com.artefact.api.repository.results.IInformationResult;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 @Repository
 @Transactional
-public interface InformationRepository extends PagingAndSortingRepository<Information, Long> {
+public interface InformationRepository extends JpaRepository<Information, Long> {
 
     String BaseQuery = "Select " +
             "information as information, " +

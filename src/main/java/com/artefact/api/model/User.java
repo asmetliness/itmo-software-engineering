@@ -14,7 +14,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(name = "first_name")
@@ -26,10 +26,10 @@ public class User {
     @Column(name = "nickname")
     private String nickname;
 
-    @Column(name = "role")
+    @Column(name = "role", nullable = false)
     private Role role;
 
-    @Column(name = "password_hash")
+    @Column(name = "password_hash", nullable = false)
     @JsonIgnore
     private String passwordHash;
 

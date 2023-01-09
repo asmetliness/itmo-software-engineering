@@ -37,8 +37,9 @@ public class Weapon {
     @JoinColumn(name="created_user_id", nullable = false, insertable = false, updatable = false)
     private User createdUser;
 
-    @Column(name = "requested_user_id")
+    @Column(name = "requested_user_id", nullable = false)
     private Long requestedUserId;
+
     @JsonIgnore
     @ManyToOne(targetEntity = User.class)
     @JoinColumn(name="requested_user_id", insertable = false, updatable = false)

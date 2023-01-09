@@ -20,10 +20,10 @@ public class Order {
     @JoinColumn(name="artifact_id", nullable = false, insertable = false, updatable = false)
     private Artifact artifact;
 
-    @Column(name = "artifact_id")
+    @Column(name = "artifact_id", nullable = false)
     private Long artifactId;
 
-    @Column
+    @Column(nullable = false)
     private BigDecimal price;
 
     @Column(name = "completion_date", columnDefinition = "DATE")
@@ -34,7 +34,7 @@ public class Order {
     @JoinColumn(name="created_user_id", nullable = false, insertable = false, updatable = false)
     private User createdUser;
 
-    @Column(name = "created_user_id")
+    @Column(name = "created_user_id", nullable = false)
     private Long createdUserId;
 
     @JsonIgnore
@@ -74,7 +74,7 @@ public class Order {
     @JoinColumn(name="status_id", nullable = false, insertable = false, updatable = false)
     private Status status;
 
-    @Column(name = "status_id")
+    @Column(name = "status_id", nullable = false)
     private Long statusId;
 
     @Column(name = "delivery_address")

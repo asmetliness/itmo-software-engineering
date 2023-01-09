@@ -13,15 +13,15 @@ public class Artifact {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
+    @Column(nullable = false)
     private String name;
 
-    @Column
+    @Column(nullable = false)
     private BigDecimal price;
 
     @Column(name = "image_path")
     private String imagePath;
 
-    @Column(name="average_days")
+    @Column(name="average_days", nullable = false)
     private int averageDays;
 }

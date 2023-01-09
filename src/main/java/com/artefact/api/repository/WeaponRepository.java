@@ -3,6 +3,7 @@ package com.artefact.api.repository;
 
 import com.artefact.api.model.Weapon;
 import com.artefact.api.repository.results.IWeaponResult;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -13,7 +14,7 @@ import java.util.Optional;
 
 @Repository
 @Transactional
-public interface WeaponRepository extends PagingAndSortingRepository<Weapon, Long> {
+public interface WeaponRepository extends JpaRepository<Weapon, Long> {
 
     String BaseQuery = "Select " +
             "weapon as weapon, " +

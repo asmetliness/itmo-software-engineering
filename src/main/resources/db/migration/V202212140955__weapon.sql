@@ -6,7 +6,7 @@ create table weapon (
     description TEXT,
     price DECIMAL(18, 2) NOT NULL,
 
-    creation_date DATE,
+    creation_date DATE NOT NULL,
     created_user_id BIGINT REFERENCES users(id) NOT NULL,
     requested_user_id BIGINT NULL REFERENCES users(id),
     acquired_user_id BIGINT NULL REFERENCES users(id),

@@ -1,7 +1,7 @@
 CREATE TABLE status
 (
     id BIGSERIAL PRIMARY KEY,
-    name TEXT
+    name TEXT NOT NULL
 );
 
 

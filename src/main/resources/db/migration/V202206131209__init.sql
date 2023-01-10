@@ -17,6 +17,8 @@ CREATE TABLE users
     password_hash Text NOT NULL
 );
 
+ALTER TABLE users ADD CONSTRAINT unique_email UNIQUE (email);
+
 
 INSERT INTO ROLES (name)
 VALUES

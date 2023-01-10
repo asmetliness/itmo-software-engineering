@@ -1,5 +1,5 @@
 ALTER TABLE users
-    ALTER COLUMN role SET DATA TYPE SMALLINT USING
+    ALTER COLUMN role SET DATA TYPE INTEGER USING
 	CASE role
 		WHEN 'Сталкер'         THEN 0
         WHEN 'Клиент'          THEN 1

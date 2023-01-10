@@ -28,7 +28,7 @@ public class Notification {
     @Column(name = "was_read")
     private boolean wasRead;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     @JsonIgnore
     private Long userId;
 

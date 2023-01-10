@@ -13,9 +13,11 @@ CREATE TABLE users
     middle_name TEXT,
     role_id BIGSERIAL REFERENCES roles (id),
 
-    email Text,
-    password_hash Text
+    email Text NOT NULL,
+    password_hash Text NOT NULL
 );
+
+ALTER TABLE users ADD CONSTRAINT unique_email UNIQUE (email);
 
 
 INSERT INTO ROLES (name)

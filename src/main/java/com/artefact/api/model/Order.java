@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -19,13 +20,13 @@ public class Order {
     @JoinColumn(name="artifact_id", nullable = false, insertable = false, updatable = false)
     private Artifact artifact;
 
-    @Column(name = "artifact_id")
+    @Column(name = "artifact_id", nullable = false)
     private Long artifactId;
 
-    @Column
-    private Double price;
+    @Column(nullable = false)
+    private BigDecimal price;
 
-    @Column(name = "completion_date")
+    @Column(name = "completion_date", columnDefinition = "DATE")
     private Date completionDate;
 
     @JsonIgnore
@@ -33,7 +34,7 @@ public class Order {
     @JoinColumn(name="created_user_id", nullable = false, insertable = false, updatable = false)
     private User createdUser;
 
-    @Column(name = "created_user_id")
+    @Column(name = "created_user_id", nullable = false)
     private Long createdUserId;
 
     @JsonIgnore
@@ -73,7 +74,7 @@ public class Order {
     @JoinColumn(name="status_id", nullable = false, insertable = false, updatable = false)
     private Status status;
 
-    @Column(name = "status_id")
+    @Column(name = "status_id", nullable = false)
     private Long statusId;
 
     @Column(name = "delivery_address")

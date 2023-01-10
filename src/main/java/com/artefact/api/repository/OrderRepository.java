@@ -2,6 +2,7 @@ package com.artefact.api.repository;
 
 import com.artefact.api.model.Order;
 import com.artefact.api.repository.results.IOrderResult;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 @Repository
 @Transactional
-public interface OrderRepository extends PagingAndSortingRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long> {
     String BaseOrderQuery = "Select " +
             "order as order, " +
             "status as status, " +

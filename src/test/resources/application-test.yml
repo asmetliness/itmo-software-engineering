@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact_test
+    username: artifact
+    password: artifact
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+
+server:
+  port: 8080
+
+flyway:
+  url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact_test
+  user: artifact
+  password: artifact
+  enabled: true
+  locations:
+    - 'classpath:db/migration'

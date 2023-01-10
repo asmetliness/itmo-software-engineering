@@ -1,7 +1,7 @@
 create table artifact (
     id BIGSERIAL PRIMARY KEY,
-    name TEXT,
-    price DECIMAL(18,2)
+    name TEXT NOT NULL,
+    price DECIMAL(18,2) NOT NULL
 );
 
 insert into artifact (name, price)

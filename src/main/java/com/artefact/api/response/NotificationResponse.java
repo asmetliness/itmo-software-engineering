@@ -11,6 +11,7 @@ public class NotificationResponse {
     private Long weaponOrderId;
     private Long informationOrderId;
 
+    public NotificationResponse() {}
     public NotificationResponse(Notification notification) {
         this.wasRead = notification.isWasRead();
         this.orderId = notification.getOrderId();

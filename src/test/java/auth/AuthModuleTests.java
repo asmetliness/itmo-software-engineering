@@ -24,8 +24,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.UUID;
+
+import static utils.TestUtil.assertNegativeResponse;
+import static utils.TestUtil.createRegisterRequest;
 
 @SpringBootTest(classes = ApiApplication.class,webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -125,21 +127,8 @@ public class AuthModuleTests {
 
         assertNegativeResponse(loginResponse, HttpStatus.NOT_FOUND, ApiErrors.UserNotFound);
     }
-    private RegisterRequest createRegisterRequest() {
-
-        var email = UUID.randomUUID().toString() + "@mail.ru";
-        return  new RegisterRequest(
-                email,
-                "password",
-                Role.Client
-        );
-    }
 
 
-    private void assertNegativeResponse(ResponseEntity<String> response, HttpStatus errorCode, String errorMsg) {
-        Assertions.assertEquals(errorCode, response.getStatusCode());
-        Assertions.assertEquals(response.getBody(), errorMsg);
-    }
 
     private void assertPositiveResponse(ResponseEntity<AuthResponse> response, String email) {
         Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());

@@ -60,7 +60,7 @@ public class InformationController {
         var userId = Auth.userId();
         var information = infoRepository.findById(request.getId());
         if(information.isEmpty()) {
-            return new ResponseEntity<>(ApiErrors.Information.NotFound, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ApiErrors.Information.NotFound, HttpStatus.NOT_FOUND);
         }
         var info = information.get();
         if(info.getCreatedUserId() != userId || info.getStatusId() != StatusIds.New){

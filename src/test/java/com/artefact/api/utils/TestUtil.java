@@ -17,6 +17,15 @@ public class TestUtil {
         Assertions.assertEquals(response.getBody(), errorMsg);
     }
 
+    public static <T> void assertUnauthorized(ResponseEntity<T> response) {
+        Assertions.assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    public static void assertValidationError(ResponseEntity<ErrorResponse> response) {
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertTrue(response.getBody().getMessage().contains("Некорректно заполненные поля!"));
+    }
+
     public static RegisterRequest createRegisterRequest() {
 
         var email = UUID.randomUUID().toString() + "@mail.ru";
@@ -27,6 +36,15 @@ public class TestUtil {
         );
     }
 
+
+    public static AuthResponse register(TestRestTemplate restTemplate) {
+        var register = TestUtil.createRegisterRequest();
+
+        var response = restTemplate
+                .postForEntity("/api/auth/register", register, AuthResponse.class);
+
+        return response.getBody();
+    }
 
     public static <TRequest, TResponse> ResponseEntity<TResponse> postAuthorized(
             TestRestTemplate restTemplate,

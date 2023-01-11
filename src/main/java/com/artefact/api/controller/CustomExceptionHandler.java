@@ -27,6 +27,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         var sb = new StringBuilder();
+        sb.append("Некорректно заполненные поля! ");
         for(ObjectError error : ex.getBindingResult().getAllErrors()) {
             sb.append(error.getDefaultMessage());
             sb.append("; ");

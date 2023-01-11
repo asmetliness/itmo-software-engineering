@@ -5,6 +5,7 @@ import com.artefact.api.ApiApplication;
 import com.artefact.api.model.Notification;
 import com.artefact.api.repository.NotificationRepository;
 import com.artefact.api.repository.UserRepository;
+import com.artefact.api.request.LoginRequest;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.response.NotificationResponse;
 import org.junit.jupiter.api.AfterAll;
@@ -19,7 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import com.artefact.api.utils.TestUtil;
 
-import static com.artefact.api.utils.TestUtil.getAuthorized;
+import static com.artefact.api.utils.TestUtil.*;
 
 @SpringBootTest(classes = ApiApplication.class,webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -49,8 +50,8 @@ public class NotificationModuleTests {
 
     @Test
     void notifications_wasRead() {
-        var authInfo = register();
-        var authInfo2 = register();
+        var authInfo = register(restTemplate);
+        var authInfo2 = register(restTemplate);
 
         createNotification(authInfo, "test");
 
@@ -87,6 +88,13 @@ public class NotificationModuleTests {
     }
 
 
+    @Test
+    void notification_cantAccessUnauthorized()
+    {
+        var result = this.restTemplate.getForEntity("/api/notifications", NotificationResponse[].class);
+        assertUnauthorized(result);
+    }
+
 
     private void createNotification(AuthResponse response, String message) {
         var notification = new Notification();
@@ -96,14 +104,7 @@ public class NotificationModuleTests {
         notificationRepository.save(notification);
     }
 
-    private AuthResponse register() {
-        var register = TestUtil.createRegisterRequest();
 
-        var response = this.restTemplate
-                .postForEntity("/api/auth/register", register, AuthResponse.class);
 
-        return response.getBody();
-
-    }
 
 }

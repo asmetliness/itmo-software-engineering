@@ -1,8 +1,10 @@
 package com.artefact.api.auth;
 
 import com.artefact.api.ApiApplication;
+import com.artefact.api.consts.Role;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.LoginRequest;
+import com.artefact.api.request.RegisterRequest;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.response.ErrorResponse;
 import com.artefact.api.utils.ApiErrors;
@@ -18,8 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-import static com.artefact.api.utils.TestUtil.assertNegativeResponse;
-import static com.artefact.api.utils.TestUtil.createRegisterRequest;
+import java.util.UUID;
+
+import static com.artefact.api.utils.TestUtil.*;
 
 @SpringBootTest(classes = ApiApplication.class,webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -64,7 +67,34 @@ public class AuthModuleTests {
 
         assertNegativeResponse(errorResponse, HttpStatus.BAD_REQUEST, ApiErrors.Auth.UserAlreadyExists);
     }
-    
+
+
+    @Test
+    public void register_validation_emptyEmail() {
+        var request = createRegisterRequest();
+        request.setEmail(null);
+        var response = this.restTemplate
+                .postForEntity("/api/auth/register", request, ErrorResponse.class);
+        assertValidationError(response);
+    }
+
+    @Test
+    public void register_validation_emptyPassword() {
+        var request = createRegisterRequest();
+        request.setPassword(null);
+        var response = this.restTemplate
+                .postForEntity("/api/auth/register", request, ErrorResponse.class);
+        assertValidationError(response);
+    }
+
+    @Test
+    public void register_validation_emptyRole() {
+        var request = createRegisterRequest();
+        request.setRole(null);
+        var response = this.restTemplate
+                .postForEntity("/api/auth/register", request, ErrorResponse.class);
+        assertValidationError(response);
+    }
 
 
     @Test
@@ -111,6 +141,25 @@ public class AuthModuleTests {
         assertNegativeResponse(loginResponse, HttpStatus.NOT_FOUND, ApiErrors.Auth.UserNotFound);
     }
 
+    @Test
+    public void login_validation_emptyEmail() {
+        var request = createLoginRequest();
+        request.setEmail(null);
+        var response = this.restTemplate
+                .postForEntity("/api/auth/login", request, ErrorResponse.class);
+        assertValidationError(response);
+    }
+
+    @Test
+    public void login_validation_emptyPassword() {
+        var request = createLoginRequest();
+        request.setPassword(null);
+        var response = this.restTemplate
+                .postForEntity("/api/auth/login", request, ErrorResponse.class);
+        assertValidationError(response);
+    }
+
+
 
 
     private void assertPositiveResponse(ResponseEntity<AuthResponse> response, String email) {
@@ -118,6 +167,14 @@ public class AuthModuleTests {
         Assertions.assertNotNull(response.getBody());
         Assertions.assertNotNull(response.getBody().getToken());
         Assertions.assertEquals(response.getBody().getUser().getEmail(), email);
+    }
+
+    private LoginRequest createLoginRequest() {
+        var email = UUID.randomUUID().toString() + "@mail.ru";
+        return  new LoginRequest(
+                email,
+                "password"
+        );
     }
 
 }

@@ -22,4 +22,6 @@ public class InformationResponse {
         status = informationResult.getStatus();
     }
 
+    public InformationResponse(){}
+
 }

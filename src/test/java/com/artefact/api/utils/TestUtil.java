@@ -23,6 +23,7 @@ public class TestUtil {
 
     public static void assertValidationError(ResponseEntity<ErrorResponse> response) {
         Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
         Assertions.assertTrue(response.getBody().getMessage().contains("Некорректно заполненные поля!"));
     }
 

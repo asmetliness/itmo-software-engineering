@@ -1,14 +1,10 @@
-package auth;
+package com.artefact.api.auth;
 
 import com.artefact.api.ApiApplication;
-import com.artefact.api.consts.Role;
-import com.artefact.api.controller.AuthController;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.LoginRequest;
-import com.artefact.api.request.RegisterRequest;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.utils.ApiErrors;
-import org.aspectj.lang.annotation.After;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -16,18 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
-import java.util.UUID;
 
-import static utils.TestUtil.assertNegativeResponse;
-import static utils.TestUtil.createRegisterRequest;
+import static com.artefact.api.utils.TestUtil.assertNegativeResponse;
+import static com.artefact.api.utils.TestUtil.createRegisterRequest;
 
 @SpringBootTest(classes = ApiApplication.class,webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

@@ -1,4 +1,4 @@
-package utils;
+package com.artefact.api.utils;
 
 import com.artefact.api.consts.Role;
 import com.artefact.api.request.RegisterRequest;

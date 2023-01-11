@@ -1,12 +1,10 @@
-package notification;
+package com.artefact.api.notification;
 
 
 import com.artefact.api.ApiApplication;
-import com.artefact.api.consts.Role;
 import com.artefact.api.model.Notification;
 import com.artefact.api.repository.NotificationRepository;
 import com.artefact.api.repository.UserRepository;
-import com.artefact.api.request.RegisterRequest;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.response.NotificationResponse;
 import org.junit.jupiter.api.AfterAll;
@@ -19,11 +17,9 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import utils.TestUtil;
+import com.artefact.api.utils.TestUtil;
 
-import java.util.UUID;
-
-import static utils.TestUtil.getAuthorized;
+import static com.artefact.api.utils.TestUtil.getAuthorized;
 
 @SpringBootTest(classes = ApiApplication.class,webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

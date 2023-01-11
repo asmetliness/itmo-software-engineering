@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.util.Optional;
 
 @RestController
@@ -32,16 +33,16 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<Object> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<Object> register(@Valid @RequestBody RegisterRequest request) {
 
         var existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
-            return new ResponseEntity<>(ApiErrors.UserAlreadyExists, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ApiErrors.Auth.UserAlreadyExists, HttpStatus.BAD_REQUEST);
         }
 
         var role = request.getRole();
         if (role == null) {
-            return new ResponseEntity<>(ApiErrors.RoleNotFound, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ApiErrors.Auth.RoleNotFound, HttpStatus.BAD_REQUEST);
         }
 
         var user = new User();
@@ -56,13 +57,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Object> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request) {
         Optional<User> user = userRepository.findByEmail(request.getEmail());
         if (user.isEmpty()) {
-            return new ResponseEntity<>(ApiErrors.UserNotFound, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Auth.UserNotFound, HttpStatus.NOT_FOUND);
         }
         if (!passwordEncoder.matches(request.getPassword(), user.get().getPasswordHash())) {
-            return new ResponseEntity<>(ApiErrors.UserNotFound, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Auth.UserNotFound, HttpStatus.NOT_FOUND);
         }
         String token = jwtUtil.generateToken(user.get().getId());
         return new ResponseEntity<>(new AuthResponse(token, user.get()), HttpStatus.OK);

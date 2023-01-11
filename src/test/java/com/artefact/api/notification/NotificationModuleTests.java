@@ -90,7 +90,7 @@ public class NotificationModuleTests {
 
     private void createNotification(AuthResponse response, String message) {
         var notification = new Notification();
-        notification.setMessage("test");
+        notification.setMessage(message);
         notification.setUserId(response.getUser().getId());
 
         notificationRepository.save(notification);

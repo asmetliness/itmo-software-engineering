@@ -8,6 +8,7 @@ import com.artefact.api.repository.results.IOrderResult;
 import com.artefact.api.request.CreateOrderRequest;
 import com.artefact.api.request.SuggestOrderRequest;
 import com.artefact.api.response.OrderResponse;
+import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.Streams;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -44,16 +46,16 @@ public class OrdersController {
         var user = userRepository.findById(userId).get();
 
         if(!user.getRole().equals(Role.Stalker)) {
-            return new ResponseEntity<>("Вы не можете начать процесс по данному заказу!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Order.CantStart, HttpStatus.FORBIDDEN);
         }
         var orderOpt = orderRepository.findById(id);
         if(orderOpt.isEmpty()) {
-            return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
         var order = orderOpt.get();
 
         if(!order.getAssignedUserId().equals(userId)) {
-            return new ResponseEntity<>("Вы не можете начать процесс по данному заказу!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Order.CantStart, HttpStatus.FORBIDDEN);
         }
 
         order.setStatusId(StatusIds.InProgress);
@@ -70,12 +72,12 @@ public class OrdersController {
 
         var orderOpt = orderRepository.findById(id);
         if(orderOpt.isEmpty()) {
-            return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
         var order = orderOpt.get();
 
         if(!canCompleteOrder(user, order)) {
-            return new ResponseEntity<>("Вы не можете завершить данный заказ!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Order.CantComplete, HttpStatus.NOT_FOUND);
         }
 
         if(user.getRole().equals(Role.Stalker)) {
@@ -104,24 +106,24 @@ public class OrdersController {
     }
 
     @PostMapping("/suggest")
-    public ResponseEntity<Object> suggestOrder(@RequestBody SuggestOrderRequest request) {
+    public ResponseEntity<Object> suggestOrder(@Valid  @RequestBody SuggestOrderRequest request) {
 
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
 
         var orderOpt = orderRepository.findById(request.getOrderId());
         if(orderOpt.isEmpty()) {
-            return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
         var order = orderOpt.get();
 
         if(!user.getRole().equals(Role.Huckster) || !order.getAcceptedUserId().equals(userId)) {
-            return new ResponseEntity<>("Вы не можете предлагать данный заказ!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Order.AccessError, HttpStatus.FORBIDDEN);
         }
         var suggestedUser = userRepository.findById(request.getUserId());
 
         if(!canSuggestToUser(suggestedUser, order)) {
-            return new ResponseEntity<>("Вы не можете предложить заказ данному пользователю!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Order.CantSuggestToUser, HttpStatus.FORBIDDEN);
         }
 
         order.setSuggestedUserId(request.getUserId());
@@ -157,12 +159,12 @@ public class OrdersController {
         var orderOpt = orderRepository.findById(id);
 
         if (orderOpt.isEmpty()) {
-            return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
         var order = orderOpt.get();
 
         if(!canDeclineOrder(user, order)) {
-            return new ResponseEntity<>("Вы не можете отклонить данный заказ!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Order.CantDecline, HttpStatus.FORBIDDEN);
         }
 
         if (role.equals(Role.Huckster)) {
@@ -228,12 +230,12 @@ public class OrdersController {
         var orderOpt = orderRepository.findById(id);
 
         if (orderOpt.isEmpty()) {
-            return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
         Order order = orderOpt.get();
 
         if(!canAcceptOrder(user, order)) {
-            return new ResponseEntity<>("Вы не можете принять данный заказ!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Order.CantAccept, HttpStatus.FORBIDDEN);
         }
 
         if (role.equals(Role.Huckster)) {
@@ -294,11 +296,11 @@ public class OrdersController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> createOrder(@RequestBody CreateOrderRequest request) {
+    public ResponseEntity<Object> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
         if(!user.getRole().equals(Role.Client)) {
-            return new ResponseEntity<>("Вы не можете создавать заказ!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Order.CantCreate, HttpStatus.FORBIDDEN);
         }
 
         var order = new Order();
@@ -324,7 +326,7 @@ public class OrdersController {
 
         var order = orderRepository.findByOrderId(id);
         if (order.isEmpty()) {
-            return new ResponseEntity<>("Order not found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(new OrderResponse(order.get()), HttpStatus.OK);
@@ -373,15 +375,15 @@ public class OrdersController {
 
         var user = userRepository.findById(userId).get();
         if(!user.getRole().equals(Role.Courier)) {
-            return new ResponseEntity<>("Вы не можете доставить данный заказ!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Order.CantDeliver, HttpStatus.FORBIDDEN);
         }
         var orderOpt = orderRepository.findById(id);
         if(orderOpt.isEmpty()) {
-            return new ResponseEntity<>("Заказ не найден!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
         var order = orderOpt.get();
         if(!order.getAcceptedCourierId().equals(userId)) {
-            return new ResponseEntity<>("Вы не можете доставить данный заказ!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Order.CantDeliver, HttpStatus.FORBIDDEN);
         }
 
         order.setStatusId(StatusIds.Delivered);

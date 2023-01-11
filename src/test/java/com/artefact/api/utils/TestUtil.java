@@ -3,6 +3,7 @@ package com.artefact.api.utils;
 import com.artefact.api.consts.Role;
 import com.artefact.api.request.RegisterRequest;
 import com.artefact.api.response.AuthResponse;
+import com.artefact.api.response.ErrorResponse;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
@@ -11,7 +12,7 @@ import java.util.UUID;
 
 public class TestUtil {
 
-    public static void assertNegativeResponse(ResponseEntity<String> response, HttpStatus errorCode, String errorMsg) {
+    public static void assertNegativeResponse(ResponseEntity<ErrorResponse> response, HttpStatus errorCode, ErrorResponse errorMsg) {
         Assertions.assertEquals(errorCode, response.getStatusCode());
         Assertions.assertEquals(response.getBody(), errorMsg);
     }

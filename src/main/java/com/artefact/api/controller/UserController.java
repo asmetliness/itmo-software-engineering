@@ -5,6 +5,7 @@ import com.artefact.api.model.User;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.UpdateUserRequest;
 import com.artefact.api.response.UserResponse;
+import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.FileNameGenerator;
 import org.springframework.http.HttpStatus;
@@ -83,12 +84,12 @@ public class UserController {
         var user = userRepository.findById(userId).get();
 
         if (image == null) {
-            return new ResponseEntity<>("Изображение отсутствует", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ApiErrors.User.ImageIsEmpty, HttpStatus.BAD_REQUEST);
         }
 
         var contentType = image.getContentType();
         if (contentType == null) {
-            return new ResponseEntity<>("Неизвестный contentType", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ApiErrors.User.UnknownImageType, HttpStatus.BAD_REQUEST);
         }
 
         var format = contentType.substring("image/".length()); // Достаем формат изображения
@@ -102,7 +103,7 @@ public class UserController {
             }
             image.transferTo(resultPath);
         } catch (IOException exp) {
-            return new ResponseEntity<>("Внутренняя ошибка", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(ApiErrors.UnexpectedError, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         this.removeUserImage(); // Удаляем старое изображение
@@ -121,7 +122,7 @@ public class UserController {
 
         var imagePath = user.getImagePath();
         if (imagePath == null) {
-            return new ResponseEntity<>("Изображение отсутствует", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ApiErrors.User.ImageIsEmpty, HttpStatus.BAD_REQUEST);
         }
 
         var file = new File(UserController.RelativeImagesPath + imagePath);
@@ -130,7 +131,7 @@ public class UserController {
             userRepository.save(user);
             return getUserDetails();
         } else {
-            return new ResponseEntity<>("Внутренняя ошибка", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(ApiErrors.UnexpectedError, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

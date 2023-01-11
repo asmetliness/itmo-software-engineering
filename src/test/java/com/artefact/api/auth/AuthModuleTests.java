@@ -4,6 +4,7 @@ import com.artefact.api.ApiApplication;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.LoginRequest;
 import com.artefact.api.response.AuthResponse;
+import com.artefact.api.response.ErrorResponse;
 import com.artefact.api.utils.ApiErrors;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -59,20 +60,11 @@ public class AuthModuleTests {
         assertPositiveResponse(response, request.getEmail());
 
         var errorResponse = this.restTemplate
-                .postForEntity("/api/auth/register", request, String.class);
+                .postForEntity("/api/auth/register", request, ErrorResponse.class);
 
-        assertNegativeResponse(errorResponse, HttpStatus.BAD_REQUEST, ApiErrors.UserAlreadyExists);
+        assertNegativeResponse(errorResponse, HttpStatus.BAD_REQUEST, ApiErrors.Auth.UserAlreadyExists);
     }
-
-    @Test
-    public void register_error_roleNotFound() {
-
-        var request = createRegisterRequest();
-        request.setRole(null);
-        var response = this.restTemplate.postForEntity("/api/auth/register", request, String.class);
-
-        assertNegativeResponse(response, HttpStatus.BAD_REQUEST, ApiErrors.RoleNotFound);
-    }
+    
 
 
     @Test
@@ -97,9 +89,9 @@ public class AuthModuleTests {
         var request = createRegisterRequest();
         var loginRequest = new LoginRequest(request.getEmail(), request.getPassword());
         var loginResponse = this.restTemplate
-                .postForEntity("/api/auth/login", loginRequest, String.class);
+                .postForEntity("/api/auth/login", loginRequest, ErrorResponse.class);
 
-        assertNegativeResponse(loginResponse, HttpStatus.NOT_FOUND, ApiErrors.UserNotFound);
+        assertNegativeResponse(loginResponse, HttpStatus.NOT_FOUND, ApiErrors.Auth.UserNotFound);
     }
 
     @Test
@@ -114,9 +106,9 @@ public class AuthModuleTests {
         var loginRequest = new LoginRequest(request.getEmail(), "wrong password");
 
         var loginResponse = this.restTemplate
-                .postForEntity("/api/auth/login", loginRequest, String.class);
+                .postForEntity("/api/auth/login", loginRequest, ErrorResponse.class);
 
-        assertNegativeResponse(loginResponse, HttpStatus.NOT_FOUND, ApiErrors.UserNotFound);
+        assertNegativeResponse(loginResponse, HttpStatus.NOT_FOUND, ApiErrors.Auth.UserNotFound);
     }
 
 

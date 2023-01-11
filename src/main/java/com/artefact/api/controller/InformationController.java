@@ -8,12 +8,14 @@ import com.artefact.api.repository.results.IInformationResult;
 import com.artefact.api.request.CreateInformationRequest;
 import com.artefact.api.request.UpdateInformationRequest;
 import com.artefact.api.response.InformationResponse;
+import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.Auth;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -32,12 +34,12 @@ public class InformationController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> createInformation(@RequestBody CreateInformationRequest request) {
+    public ResponseEntity<Object> createInformation(@Valid @RequestBody CreateInformationRequest request) {
         var userId = Auth.userId();
 
         var user = userRepository.findById(userId).get();
         if(!user.getRole().equals(Role.Informer)) {
-            return new ResponseEntity<>("Выставлять информацию может только информатор!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Information.CreateError, HttpStatus.FORBIDDEN);
         }
         Information info = new Information();
         info.setCreatedUserId(userId);
@@ -54,15 +56,15 @@ public class InformationController {
     }
 
     @PutMapping
-    public ResponseEntity<Object> updateInformation(@RequestBody UpdateInformationRequest request) {
+    public ResponseEntity<Object> updateInformation(@Valid @RequestBody UpdateInformationRequest request) {
         var userId = Auth.userId();
         var information = infoRepository.findById(request.getId());
         if(information.isEmpty()) {
-            return new ResponseEntity<>("Информация не найдена!", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ApiErrors.Information.NotFound, HttpStatus.BAD_REQUEST);
         }
         var info = information.get();
         if(info.getCreatedUserId() != userId || info.getStatusId() != StatusIds.New){
-            return new ResponseEntity<>("Вы не можете редактировать данную информацию!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Information.AccessViolation, HttpStatus.FORBIDDEN);
         }
 
         info.setTitle(request.getTitle());
@@ -85,7 +87,7 @@ public class InformationController {
         }
         var info = information.get();
         if(info.getCreatedUserId() != userId || info.getStatusId() != StatusIds.New) {
-            return new ResponseEntity<>("Вы не можете удалить данную информацию!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Information.AccessViolation, HttpStatus.FORBIDDEN);
         }
 
         infoRepository.deleteById(id);
@@ -114,7 +116,7 @@ public class InformationController {
 
         var infoOpt = infoRepository.findByInformationId(id);
         if (infoOpt.isEmpty())
-            return new ResponseEntity<>("Информация не найдена!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Information.NotFound, HttpStatus.NOT_FOUND);
 
         var info = infoOpt.get();
 
@@ -155,12 +157,12 @@ public class InformationController {
         var user = userRepository.findById(userId).get();
 
         if(!user.getRole().equals(Role.Stalker)) {
-            return new ResponseEntity<>("Покупка информации доступна только сталкерам!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Information.UnauthorizedRole, HttpStatus.FORBIDDEN);
         }
 
         var informationOpt = infoRepository.findById(id);
         if(informationOpt.isEmpty()) {
-            return new ResponseEntity<>("Информация не найдено!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Information.NotFound, HttpStatus.NOT_FOUND);
         }
 
         var information = informationOpt.get();
@@ -176,11 +178,11 @@ public class InformationController {
         var userId = Auth.userId();
         var informationOpt = infoRepository.findById(id);
         if(informationOpt.isEmpty()) {
-            return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Information.NotFound, HttpStatus.NOT_FOUND);
         }
         var information = informationOpt.get();
         if(!information.getCreatedUserId().equals(userId)) {
-            return new ResponseEntity<>("Вы не можете подтвердить данный заказ", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Information.AccessViolation, HttpStatus.FORBIDDEN);
         }
 
         information.setAcquiredUserId(information.getRequestedUserId());
@@ -197,11 +199,11 @@ public class InformationController {
         var userId = Auth.userId();
         var informationOpt = infoRepository.findById(id);
         if(informationOpt.isEmpty()) {
-            return new ResponseEntity<>("Оружие не найдено!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Information.NotFound, HttpStatus.NOT_FOUND);
         }
         var information = informationOpt.get();
         if(!information.getCreatedUserId().equals(userId) || information.getAcquiredUser() != null) {
-            return new ResponseEntity<>("Вы не можете отклонить данный заказ", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(ApiErrors.Information.AccessViolation, HttpStatus.FORBIDDEN);
         }
 
         information.setRequestedUserId(null);

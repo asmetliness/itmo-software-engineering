@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 @Getter
@@ -12,9 +15,15 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @ToString
 public class UpdateInformationRequest {
-    private long id;
+
+    @NotNull(message = "Пожалуйста, укажите идентификатор информации!")
+    private Long id;
+    @NotBlank(message = "Пожалуйста, укажите заголовок!")
     private String title;
+    @NotBlank(message = "Пожалуйста, укажите описание!")
     private String description;
+    @NotBlank(message = "Пожалуйста, укажите информацию!")
     private String information; // Информацию, которую купили. Отдавать только при покупке.
+    @NotNull(message = "Пожалуйста, укажите цену!")
     private BigDecimal price;
 }

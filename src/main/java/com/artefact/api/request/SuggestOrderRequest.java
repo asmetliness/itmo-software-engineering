@@ -5,11 +5,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import javax.validation.constraints.NotNull;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @ToString
 public class SuggestOrderRequest {
-    private long orderId;
-    private long userId;
+    @NotNull(message = "Пожалуйста, укажите идентификатор заказа!")
+    private Long orderId;
+    @NotNull(message = "Пожалуйста, укажите идентификатор пользователя!")
+    private Long userId;
 }

@@ -18,14 +18,14 @@ services:
 #      - PGADMIN_DEFAULT_EMAIL=artifact@yandex.ru
 #      - PGADMIN_DEFAULT_PASSWORD=artifact
 
-#  api:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    ports:
-#      - "8080:8080"
-#    environment:
-#      - POSTGRESQL_DB_HOST=postgresql
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - POSTGRESQL_DB_HOST=postgresql
 
 volumes:
   db_data:

@@ -27,18 +27,26 @@ public class TestUtil {
     }
 
     public static RegisterRequest createRegisterRequest() {
+        return createRegisterRequest(Role.Client);
+    }
+
+        public static RegisterRequest createRegisterRequest(Role role) {
 
         var email = UUID.randomUUID().toString() + "@mail.ru";
         return  new RegisterRequest(
                 email,
                 "password",
-                Role.Client
+                role
         );
     }
 
 
     public static AuthResponse register(TestRestTemplate restTemplate) {
-        var register = TestUtil.createRegisterRequest();
+        return registerRole(restTemplate, Role.Client);
+    }
+
+    public static AuthResponse registerRole(TestRestTemplate restTemplate, Role role) {
+        var register = TestUtil.createRegisterRequest(role);
 
         var response = restTemplate
                 .postForEntity("/api/auth/register", register, AuthResponse.class);
@@ -59,6 +67,21 @@ public class TestUtil {
         HttpEntity<TRequest> entity = new HttpEntity(body, headers);
 
         return restTemplate.exchange(url, HttpMethod.POST, entity, response);
+    }
+
+    public static <TRequest, TResponse> ResponseEntity<TResponse> putAuthorized(
+            TestRestTemplate restTemplate,
+            String url,
+            AuthResponse auth,
+            TRequest body,
+            Class<TResponse> response) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization" , "Bearer " + auth.getToken());
+
+        HttpEntity<TRequest> entity = new HttpEntity(body, headers);
+
+        return restTemplate.exchange(url, HttpMethod.PUT, entity, response);
     }
 
     public static <TResponse> ResponseEntity<TResponse> getAuthorized(

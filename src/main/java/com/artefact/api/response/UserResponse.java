@@ -8,4 +8,6 @@ import lombok.Data;
 @Data
 public class UserResponse {
     private User user;
+
+    public UserResponse(){}
 }

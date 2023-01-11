@@ -6,6 +6,7 @@ import com.artefact.api.request.LoginRequest;
 import com.artefact.api.request.RegisterRequest;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.security.JwtUtil;
+import com.artefact.api.utils.ApiErrors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,12 +36,12 @@ public class AuthController {
 
         var existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
-            return new ResponseEntity<>("Пользователь с таким email уже существует", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ApiErrors.UserAlreadyExists, HttpStatus.BAD_REQUEST);
         }
 
         var role = request.getRole();
         if (role == null) {
-            return new ResponseEntity<>("Переданная роль не найдена", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ApiErrors.RoleNotFound, HttpStatus.BAD_REQUEST);
         }
 
         var user = new User();
@@ -58,10 +59,10 @@ public class AuthController {
     public ResponseEntity<Object> login(@RequestBody LoginRequest request) {
         Optional<User> user = userRepository.findByEmail(request.getEmail());
         if (user.isEmpty()) {
-            return new ResponseEntity<>("Пользователь не найден!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.UserNotFound, HttpStatus.NOT_FOUND);
         }
         if (!passwordEncoder.matches(request.getPassword(), user.get().getPasswordHash())) {
-            return new ResponseEntity<>("Пользователь не найден!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.UserNotFound, HttpStatus.NOT_FOUND);
         }
         String token = jwtUtil.generateToken(user.get().getId());
         return new ResponseEntity<>(new AuthResponse(token, user.get()), HttpStatus.OK);

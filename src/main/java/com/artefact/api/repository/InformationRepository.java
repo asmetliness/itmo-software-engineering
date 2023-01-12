@@ -30,7 +30,7 @@ public interface InformationRepository extends JpaRepository<Information, Long> 
     String FindByStatusQuery = BaseQuery + " where information.statusId = :statusId";
     String FindByAcquiredQuery = BaseQuery + " where information.acquiredUserId = :userId";
     String FindByCreatedQuery = BaseQuery + " where information.createdUserId = :userId";
-    String FindNotAcceptedQuery = BaseQuery + " where information.acquiredUserId is null";
+    String FindNotAcceptedQuery = BaseQuery + " where information.requestedUserId is null";
 
     String FindRequestedQuery = BaseQuery + " where information.createdUserId = :userId AND information.requestedUserId is not null";
 
@@ -47,8 +47,6 @@ public interface InformationRepository extends JpaRepository<Information, Long> 
     @Query(FindByCreatedQuery)
     Iterable<IInformationResult> findByCreatedUser(@Param("userId") long userId);
 
-    @Query(FindNotAcceptedQuery)
-    Iterable<IInformationResult> findAllNotAccepted();
 
     @Query(FindRequestedQuery)
     Iterable<IInformationResult> findRequestedInformation(@Param("userId")long userId);

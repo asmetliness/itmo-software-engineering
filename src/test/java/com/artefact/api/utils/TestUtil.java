@@ -70,6 +70,20 @@ public class TestUtil {
         return restTemplate.exchange(url, HttpMethod.POST, entity, response);
     }
 
+    public static <TRequest, TResponse> ResponseEntity<TResponse> postAuthorized(
+            TestRestTemplate restTemplate,
+            String url,
+            AuthResponse auth,
+            Class<TResponse> response) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization" , "Bearer " + auth.getToken());
+
+        HttpEntity entity = new HttpEntity(headers);
+
+        return restTemplate.exchange(url, HttpMethod.POST, entity, response);
+    }
+
     public static <TRequest, TResponse> ResponseEntity<TResponse> putAuthorized(
             TestRestTemplate restTemplate,
             String url,
@@ -97,5 +111,19 @@ public class TestUtil {
         HttpEntity entity = new HttpEntity(headers);
 
         return restTemplate.exchange(url, HttpMethod.GET, entity, response);
+    }
+
+    public static <TResponse> ResponseEntity<TResponse> deleteAuthorized(
+            TestRestTemplate restTemplate,
+            String url,
+            AuthResponse auth,
+            Class<TResponse> response) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization" , "Bearer " + auth.getToken());
+
+        HttpEntity entity = new HttpEntity(headers);
+
+        return restTemplate.exchange(url, HttpMethod.DELETE, entity, response);
     }
 }

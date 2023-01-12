@@ -27,6 +27,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 import static com.artefact.api.utils.TestUtil.*;
@@ -103,34 +104,26 @@ public class InformationModuleTests {
         Assertions.assertEquals(ApiErrors.Information.CreateError, result.getBody());
     }
 
+
+
     @Test
-    void information_create_emptyTitleError() {
+    void information_create_allFieldsValidation() {
         createValidationHelper((info) -> {
             info.setTitle(null);
         });
-    }
 
-    @Test
-    void information_create_emptyDescriptionError() {
         createValidationHelper((info) -> {
             info.setDescription(null);
         });
-    }
 
-    @Test
-    void information_create_emptyInformationError() {
         createValidationHelper((info) -> {
             info.setInformation(null);
         });
-    }
 
-    @Test
-    void information_create_emptyPriceError() {
         createValidationHelper((info) -> {
             info.setPrice(null);
         });
     }
-
     @Test
     void information_update() {
         var user = TestUtil.registerRole(restTemplate, Role.Informer);
@@ -240,39 +233,399 @@ public class InformationModuleTests {
         Assertions.assertEquals(ApiErrors.Information.NotFound, result.getBody());
     }
 
+
     @Test
-    void information_update_emptyIdError() {
+    void information_update_allFieldsValidation() {
         updateValidationHelper((info) -> {
             info.setId(null);
         });
-    }
 
-    @Test
-    void information_update_emptyTitleError() {
         updateValidationHelper((info) -> {
             info.setTitle(null);
         });
-    }
 
-    @Test
-    void information_update_emptyDescriptionError() {
         updateValidationHelper((info) -> {
             info.setDescription(null);
         });
-    }
 
-    @Test
-    void information_update_emptyInformationError() {
         updateValidationHelper((info) -> {
             info.setInformation(null);
         });
-    }
 
-    @Test
-    void information_update_emptyPriceError() {
         updateValidationHelper((info) -> {
             info.setPrice(null);
         });
+    }
+
+
+    @Test
+    void information_delete() {
+        var user = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                user,
+                createInformation,
+                InformationResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var getBeforeDelete = TestUtil.getAuthorized(restTemplate,
+                "/api/information/" + result.getBody().getInformation().getId().toString(),
+                user,
+                InformationResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, getBeforeDelete.getStatusCode());
+        Assertions.assertEquals(result.getBody().getInformation().getId(), getBeforeDelete.getBody().getInformation().getId());
+
+        var deleteResult = TestUtil.deleteAuthorized(restTemplate,
+                "/api/information/" + result.getBody().getInformation().getId().toString(),
+                user,
+                InformationResponse[].class);
+
+        Assertions.assertEquals(HttpStatus.OK, deleteResult.getStatusCode());
+
+        var getAfterDelete = TestUtil.getAuthorized(restTemplate,
+                "/api/information/" + result.getBody().getInformation().getId().toString(),
+                user,
+                ErrorResponse.class);
+
+        Assertions.assertEquals(HttpStatus.NOT_FOUND, getAfterDelete.getStatusCode());
+        Assertions.assertEquals(ApiErrors.Information.NotFound, getAfterDelete.getBody());
+
+    }
+
+    @Test
+    void information_delete_unauthorizedError() {
+        var user = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                user,
+                createInformation,
+                InformationResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var deleteResult = restTemplate.getForEntity(
+                "/api/information/" + result.getBody().getInformation().getId().toString(),
+                ErrorResponse.class
+        );
+
+        assertUnauthorized(deleteResult);
+    }
+
+    @Test
+    void information_delete_accessViolationError() {
+        var user = TestUtil.registerRole(restTemplate, Role.Informer);
+        var user2 = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                user,
+                createInformation,
+                InformationResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var deleteResult = TestUtil.deleteAuthorized(restTemplate,
+                "/api/information/" + result.getBody().getInformation().getId().toString(),
+                user2,
+                ErrorResponse.class);
+
+        Assertions.assertEquals(HttpStatus.FORBIDDEN, deleteResult.getStatusCode());
+        Assertions.assertEquals(ApiErrors.Information.AccessViolation, deleteResult.getBody());
+    }
+
+
+    @Test
+    void information_getAvailable() {
+        var informer = TestUtil.registerRole(restTemplate, Role.Informer);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                informer,
+                createInformation,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var stalkerResult = TestUtil.getAuthorized(restTemplate,
+                "/api/information/available",
+                stalker,
+                InformationResponse[].class);
+
+        Assertions.assertEquals(HttpStatus.OK, stalkerResult.getStatusCode());
+        Assertions.assertTrue(stalkerResult.getBody().length > 0);
+        Assertions.assertTrue(Arrays.stream(stalkerResult.getBody())
+                .anyMatch(info -> info.getInformation().getId().equals(result.getBody().getInformation().getId())));
+        Assertions.assertTrue(Arrays.stream(stalkerResult.getBody()).allMatch(info ->
+                info.getInformation().getInformation() == null));
+
+        var clientResult = TestUtil.getAuthorized(restTemplate,
+                "/api/information/available",
+                client,
+                InformationResponse[].class);
+        Assertions.assertEquals(HttpStatus.OK, clientResult.getStatusCode());
+        Assertions.assertEquals(0, clientResult.getBody().length);
+    }
+
+    @Test
+    void information_getAvailable_unauthorizedError() {
+        var informer = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var createResult = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                informer,
+                createInformation,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, createResult.getStatusCode());
+
+        var result = restTemplate.getForEntity("/api/information/available", ErrorResponse.class);
+        assertUnauthorized(result);
+    }
+
+    @Test
+    void information_request_fullProcess() {
+        var informer = TestUtil.registerRole(restTemplate, Role.Informer);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var informer2 = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                informer,
+                createInformation,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var requestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/information/request/" + result.getBody().getInformation().getId(),
+                stalker,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, requestResult.getStatusCode());
+        Assertions.assertEquals(StatusIds.Requested, requestResult.getBody().getInformation().getStatusId());
+        Assertions.assertNotNull(requestResult.getBody().getRequestedUser());
+        Assertions.assertEquals(stalker.getUser().getId(), requestResult.getBody().getRequestedUser().getId());
+        Assertions.assertNull(requestResult.getBody().getAcquiredUser());
+
+        var getRequestedResult = TestUtil.getAuthorized(restTemplate,
+                "/api/information/requested",
+                informer,
+                InformationResponse[].class);
+        Assertions.assertEquals(HttpStatus.OK, getRequestedResult.getStatusCode());
+        Assertions.assertTrue(getRequestedResult.getBody().length > 0);
+        Assertions.assertTrue(Arrays.stream(getRequestedResult.getBody()).anyMatch(i ->
+                i.getInformation().getId().equals(result.getBody().getInformation().getId())));
+
+        var getStalkerRequestedResult = TestUtil.getAuthorized(restTemplate,
+                "/api/information/requested",
+                stalker,
+                InformationResponse[].class);
+        Assertions.assertEquals(HttpStatus.OK, getStalkerRequestedResult.getStatusCode());
+        Assertions.assertTrue(getStalkerRequestedResult.getBody().length > 0);
+        Assertions.assertTrue(Arrays.stream(getStalkerRequestedResult.getBody()).anyMatch(i ->
+                i.getInformation().getId().equals(result.getBody().getInformation().getId())));
+        Assertions.assertTrue(Arrays.stream(getStalkerRequestedResult.getBody()).anyMatch(i ->
+                i.getInformation().getInformation() == null));
+
+        var getEmptyRequestedResult = TestUtil.getAuthorized(restTemplate,
+                "/api/information/requested",
+                informer2,
+                InformationResponse[].class);
+        Assertions.assertEquals(HttpStatus.OK, getEmptyRequestedResult.getStatusCode());
+        Assertions.assertEquals(0, getEmptyRequestedResult.getBody().length);
+
+        var getAvailableResult = TestUtil.getAuthorized(restTemplate,
+                "/api/information/available",
+                stalker,
+                InformationResponse[].class);
+
+        Assertions.assertEquals(HttpStatus.OK, getAvailableResult.getStatusCode());
+        Assertions.assertFalse(Arrays.stream(getAvailableResult.getBody()).anyMatch(i ->
+                i.getInformation().getId().equals(result.getBody().getInformation().getId())));
+    }
+
+    @Test
+    void information_request_unauthorizedError() {
+        var informer = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                informer,
+                createInformation,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var requestResult = restTemplate.postForEntity(
+                "/api/information/request/" + result.getBody().getInformation().getId(),
+                null,
+                InformationResponse.class);
+
+        assertUnauthorized(requestResult);
+    }
+
+    @Test
+    void information_getRequested_unauthorizedError() {
+
+        var result = restTemplate.getForEntity("/api/information/requested", ErrorResponse.class);
+
+        assertUnauthorized(result);
+    }
+
+    @Test
+    void information_confirm_fullProcess_fullErrors() {
+        var informer = TestUtil.registerRole(restTemplate, Role.Informer);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var informer2 = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                informer,
+                createInformation,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var requestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/information/request/" + result.getBody().getInformation().getId(),
+                stalker,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, requestResult.getStatusCode());
+        Assertions.assertEquals(StatusIds.Requested, requestResult.getBody().getInformation().getStatusId());
+
+        var errorConfirmResult = TestUtil.postAuthorized(restTemplate,
+                "/api/information/confirm/" + result.getBody().getInformation().getId(),
+                informer2,
+                ErrorResponse.class);
+        Assertions.assertEquals(HttpStatus.FORBIDDEN, errorConfirmResult.getStatusCode());
+        Assertions.assertEquals(ApiErrors.Information.AccessViolation, errorConfirmResult.getBody());
+
+        var notFoundResult = TestUtil.postAuthorized(restTemplate,
+                "/api/information/confirm/" +123123123,
+                informer,
+                ErrorResponse.class);
+        Assertions.assertEquals(HttpStatus.NOT_FOUND, notFoundResult.getStatusCode());
+        Assertions.assertEquals(ApiErrors.Information.NotFound, notFoundResult.getBody());
+
+        var confirmResult = TestUtil.postAuthorized(restTemplate,
+                "/api/information/confirm/" + result.getBody().getInformation().getId(),
+                informer,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, confirmResult.getStatusCode());
+        Assertions.assertEquals(StatusIds.Acquired, confirmResult.getBody().getInformation().getStatusId());
+        Assertions.assertEquals(stalker.getUser().getId(), confirmResult.getBody().getAcquiredUser().getId());
+        Assertions.assertNull(confirmResult.getBody().getRequestedUser());
+
+        var stalkerGetAcquired = TestUtil.getAuthorized(restTemplate,
+                "/api/information",
+                stalker,
+                InformationResponse[].class);
+        Assertions.assertEquals(HttpStatus.OK, stalkerGetAcquired.getStatusCode());
+        Assertions.assertTrue(stalkerGetAcquired.getBody().length > 0);
+        Assertions.assertTrue(Arrays.stream(stalkerGetAcquired.getBody()).allMatch(i ->
+                i.getInformation().getInformation() != null));
+        Assertions.assertTrue(Arrays.stream(stalkerGetAcquired.getBody()).anyMatch(i ->
+                i.getInformation().getId().equals(result.getBody().getInformation().getId())));
+    }
+
+    @Test
+    void information_confirm_unauthorizedError() {
+
+        var result = restTemplate.postForEntity("/api/information/confirm/10",
+                null,
+                ErrorResponse.class);
+
+        assertUnauthorized(result);
+    }
+
+    @Test
+    void information_decline_fullProcess_fullErrors() {
+        var informer = TestUtil.registerRole(restTemplate, Role.Informer);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var informer2 = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                informer,
+                createInformation,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var requestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/information/request/" + result.getBody().getInformation().getId(),
+                stalker,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, requestResult.getStatusCode());
+        Assertions.assertEquals(StatusIds.Requested, requestResult.getBody().getInformation().getStatusId());
+
+        var errorConfirmResult = TestUtil.postAuthorized(restTemplate,
+                "/api/information/decline/" + result.getBody().getInformation().getId(),
+                informer2,
+                ErrorResponse.class);
+        Assertions.assertEquals(HttpStatus.FORBIDDEN, errorConfirmResult.getStatusCode());
+        Assertions.assertEquals(ApiErrors.Information.AccessViolation, errorConfirmResult.getBody());
+
+        var notFoundResult = TestUtil.postAuthorized(restTemplate,
+                "/api/information/decline/" +123123123,
+                informer,
+                ErrorResponse.class);
+        Assertions.assertEquals(HttpStatus.NOT_FOUND, notFoundResult.getStatusCode());
+        Assertions.assertEquals(ApiErrors.Information.NotFound, notFoundResult.getBody());
+
+        var declineResult = TestUtil.postAuthorized(restTemplate,
+                "/api/information/decline/" + result.getBody().getInformation().getId(),
+                informer,
+                InformationResponse.class);
+        Assertions.assertEquals(HttpStatus.OK, declineResult.getStatusCode());
+        Assertions.assertEquals(StatusIds.New, declineResult.getBody().getInformation().getStatusId());
+        Assertions.assertNull(declineResult.getBody().getRequestedUser());
+        Assertions.assertNull(declineResult.getBody().getAcquiredUser());
+
+        var stalkerGetAvailable = TestUtil.getAuthorized(restTemplate,
+                "/api/information/available",
+                stalker,
+                InformationResponse[].class);
+        Assertions.assertEquals(HttpStatus.OK, stalkerGetAvailable.getStatusCode());
+        Assertions.assertTrue(stalkerGetAvailable.getBody().length > 0);
+        Assertions.assertTrue(Arrays.stream(stalkerGetAvailable.getBody()).allMatch(i ->
+                i.getInformation().getInformation() == null));
+        Assertions.assertTrue(Arrays.stream(stalkerGetAvailable.getBody()).anyMatch(i ->
+                i.getInformation().getId().equals(result.getBody().getInformation().getId())));
+
+        var stalkerGetAcquired = TestUtil.getAuthorized(restTemplate,
+                "/api/information",
+                stalker,
+                InformationResponse[].class);
+
+        Assertions.assertEquals(HttpStatus.OK, stalkerGetAcquired.getStatusCode());
+        Assertions.assertEquals(0, stalkerGetAcquired.getBody().length);
+    }
+
+    @Test
+    void information_decline_unauthorizedError() {
+        var result = restTemplate.postForEntity("/api/information/decline/10",
+                null,
+                ErrorResponse.class);
+
+        assertUnauthorized(result);
     }
 
 

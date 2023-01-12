@@ -132,7 +132,13 @@ public class InformationController {
 
     @GetMapping("/available")
     public ResponseEntity<Object> getAvailableList() {
-        var information = infoRepository.findAllNotAccepted();
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        var information = switch (user.getRole()) {
+            case Stalker -> infoRepository.findByStatus(StatusIds.New);
+            default -> new ArrayList<IInformationResult>();
+        };
         return getIterableResponseEntity(information, true);
     }
 

@@ -1,6 +1,7 @@
 package com.artefact.api.request;
 
 
+import com.artefact.api.response.WeaponResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,4 +17,6 @@ public class WeaponRequest {
 
     @NotBlank(message = "Пожалуйста, укажите адрес доставки!")
     String deliveryAddress;
+
+    public WeaponRequest(){}
 }

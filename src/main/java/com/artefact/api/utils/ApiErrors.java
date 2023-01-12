@@ -43,6 +43,8 @@ public class ApiErrors {
     }
 
     public class Weapon {
+        public static final ErrorResponse CantDelete = new ErrorResponse("Вы не можете удалить это оружие!");
+
         public static final ErrorResponse CantCreate = new ErrorResponse("Выставлять оружие может только торговец оружием!");
 
         public static final ErrorResponse NotFound = new ErrorResponse("Оружие не найдено!");

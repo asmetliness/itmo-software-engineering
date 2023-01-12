@@ -28,4 +28,5 @@ public class WeaponResponse {
         this.status = weapon.getStatus();
     }
 
+    public WeaponResponse(){}
 }

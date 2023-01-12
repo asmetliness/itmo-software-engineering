@@ -85,8 +85,12 @@ public class WeaponController {
         var userId = Auth.userId();
 
         var weapon = weaponRepository.findById(id);
-        if(weapon.isEmpty() || !weapon.get().getCreatedUserId().equals(userId)) {
+        if(weapon.isEmpty()) {
             return getWeapons();
+        }
+
+        if(!weapon.get().getCreatedUserId().equals(userId)) {
+            return new ResponseEntity<>(ApiErrors.Weapon.CantDelete, HttpStatus.FORBIDDEN);
         }
 
         weaponRepository.deleteById(id);

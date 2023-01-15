@@ -57,6 +57,7 @@ public class OrdersController {
         order.setStatusId(StatusIds.New);
         order.setPrice(request.getPrice());
         order.setDeliveryAddress(request.getDeliveryAddress());
+        order.setCompletionDate(request.getCompletionDate());
         orderRepository.save(order);
 
         var hucksters = userRepository.findByRole(Role.Huckster);

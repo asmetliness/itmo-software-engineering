@@ -84,8 +84,10 @@ public class OrderModuleTests {
         assertEquals(request.getArtifactId(), Objects.requireNonNull(result.getBody()).getArtifact().getId());
         assertEquals(request.getDeliveryAddress(), result.getBody().getOrder().getDeliveryAddress());
         assertEquals(request.getPrice(), result.getBody().getOrder().getPrice());
+        assertNotNull(result.getBody().getOrder().getCompletionDate());
         assertEquals(StatusIds.New, result.getBody().getOrder().getStatusId());
         assertEquals(client.getUser().getId(), result.getBody().getOrder().getCreatedUserId());
+
         assertNull(result.getBody().getOrder().getAcceptedCourierId());
         assertNull(result.getBody().getOrder().getAcceptedUserId());
         assertNull(result.getBody().getOrder().getAssignedUserId());

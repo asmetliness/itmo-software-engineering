@@ -796,7 +796,39 @@ public class OrderModuleTests {
 
     @Test
     void order_getAvailable_stalker() {
-        assertTrue(false);
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+        assertOK(result);
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var suggestRequest= getSuggestRequest(stalker.getUser(), result.getBody().getOrder());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                OrderResponse.class);
+        assertOK(suggestResult);
+
+        var stalkerAvailable = TestUtil.getAuthorized(restTemplate,
+                "/api/orders/available",
+                stalker,
+                OrderResponse[].class);
+        assertOK(stalkerAvailable);
+        assertTrue(stalkerAvailable.getBody().length > 0);
+        assertTrue(Arrays.stream(stalkerAvailable.getBody()).anyMatch(o ->
+                o.getOrder().getId().equals(result.getBody().getOrder().getId())));
     }
 
     @Test

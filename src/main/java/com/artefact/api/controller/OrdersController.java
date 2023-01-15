@@ -89,8 +89,9 @@ public class OrdersController {
 
         var orders = switch (role) {
             case Client -> orderRepository.findByCreatedUserId(userId); //TESTED
-            case Stalker -> orderRepository.findByAssignedUserId(userId); //TESTED
-            case Huckster -> orderRepository.findByAcceptedUserId(userId);
+            case Stalker -> orderRepository.findByAssignedUserId(userId);
+            case Huckster -> orderRepository.findByAcceptedUserId(userId); //TESTED
+            case Courier -> orderRepository.findByAcceptedCourierId(userId);
             default -> new ArrayList<IOrderResult>(); // TESTED
         };
 
@@ -109,7 +110,7 @@ public class OrdersController {
         var orders = switch (user.get().getRole()) {
             case Huckster -> orderRepository.findOrderByStatus(StatusIds.New); // TESTED
 
-            case Stalker, Courier -> orderRepository.findSuggestedOrders(userId);
+            case Stalker, Courier -> orderRepository.findSuggestedOrders(userId); // TESTED
             default -> new ArrayList<IOrderResult>(); //TESTED
         };
         var response = Streams.from(orders)

@@ -40,6 +40,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     String ByOrderId              = BaseOrderQuery + " where order.id = :orderId";
 
+    String ByAcceptedCourierId    = BaseOrderQuery + " where order.acceptedCourierId = :userId";
+
     @Query(ByOrderId)
     Optional<IOrderResult> findByOrderId(@Param("orderId") long orderId);
 
@@ -57,6 +59,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query(BySuggestedUserQuery)
     Iterable<IOrderResult> findSuggestedOrders(@Param("userId") long userId);
+
+    @Query(ByAcceptedCourierId)
+    Iterable<IOrderResult> findByAcceptedCourierId(@Param("userId") long userId);
 
 }
 

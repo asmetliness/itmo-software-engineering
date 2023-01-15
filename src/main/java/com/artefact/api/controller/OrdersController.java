@@ -89,7 +89,7 @@ public class OrdersController {
 
         var orders = switch (role) {
             case Client -> orderRepository.findByCreatedUserId(userId); //TESTED
-            case Stalker -> orderRepository.findByAssignedUserId(userId);
+            case Stalker -> orderRepository.findByAssignedUserId(userId); // TESTED
             case Huckster -> orderRepository.findByAcceptedUserId(userId); //TESTED
             case Courier -> orderRepository.findByAcceptedCourierId(userId);
             default -> new ArrayList<IOrderResult>(); // TESTED
@@ -150,15 +150,16 @@ public class OrdersController {
                     order.getId()));
         }
 
+        //TESTED
         if (role.equals(Role.Stalker)) {
             order.setAssignedUserId(user.getId());
             order.setSuggestedUserId(null);
             order.setStatusId(StatusIds.AcceptedByStalker);
-
+            //TESTED
             notificationRepository.save(new Notification(NotificationMessages.Order.AcceptedByStalker,
                     order.getAcceptedUserId(),
                     order.getId()));
-
+            //TESTED
             notificationRepository.save(new Notification(NotificationMessages.Order.AcceptedByStalker,
                     order.getCreatedUserId(),
                     order.getId()));
@@ -227,6 +228,7 @@ public class OrdersController {
                     order.getId()));
         }
 
+        //TESTED
         if (role.equals(Role.Stalker)) {
             order.setAssignedUserId(null);
             order.setSuggestedUserId(null);
@@ -355,7 +357,7 @@ public class OrdersController {
         var order = orderOpt.get();
 
         if(!canCompleteOrder(user, order)) {
-            return new ResponseEntity<>(ApiErrors.Order.CantComplete, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiErrors.Order.CantComplete, HttpStatus.FORBIDDEN);
         }
 
         if(user.getRole().equals(Role.Stalker)) {
@@ -372,7 +374,7 @@ public class OrdersController {
     private Boolean canCompleteOrder(User user, Order order) {
         if(user.getRole().equals(Role.Stalker)) {
             return order.getStatusId().equals(StatusIds.InProgress) &&
-                    order.getAcceptedUserId().equals(user.getId());
+                    order.getAssignedUserId().equals(user.getId());
         }
 
         if(user.getRole().equals(Role.Client)) {

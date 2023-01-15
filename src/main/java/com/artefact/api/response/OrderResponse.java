@@ -40,4 +40,6 @@ public class OrderResponse {
         acceptedCourier = order.getAcceptedCourier();
         suggestedUser = order.getSuggestedUser();
     }
+
+    public OrderResponse(){}
 }

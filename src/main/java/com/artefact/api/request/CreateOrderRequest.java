@@ -21,7 +21,7 @@ public class CreateOrderRequest {
     @NotNull(message = "Пожалуйста, укажите цену!")
     private BigDecimal price;
 
-    @JsonFormat(pattern = "dd.MM.yyyy")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date completionDate;
 
     @NotBlank(message = "Пожалуйста, укажите адрес доставки!")

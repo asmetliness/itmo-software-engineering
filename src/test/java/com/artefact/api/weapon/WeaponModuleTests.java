@@ -43,7 +43,6 @@ public class WeaponModuleTests {
     @Autowired
     private TestRestTemplate restTemplate;
 
-
     @AfterAll
     static void cleanupData(@Autowired UserRepository userRepository, @Autowired WeaponRepository weaponRepository) {
         weaponRepository.deleteAll();

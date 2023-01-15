@@ -647,6 +647,46 @@ public class OrderModuleTests {
         assertNull(suggestResult.getBody().getAssignedUser());
     }
 
+    @Test
+    void order_suggest_userNotifications() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var suggestRequest= getSuggestRequest(stalker.getUser(), result.getBody().getOrder());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                OrderResponse.class);
+        assertOK(suggestResult);
+
+        var stalkerNotifications = TestUtil.getAuthorized(restTemplate,
+                "/api/notifications",
+                stalker,
+                NotificationResponse[].class);
+        assertOK(stalkerNotifications);
+        assertTrue(Arrays.stream(stalkerNotifications.getBody()).anyMatch(n ->
+                n.getOrderId().equals(result.getBody().getOrder().getId())
+                        && n.getText().equals(NotificationMessages.Order.Suggested)
+        ));
+    }
+
 
     @Test
     void order_suggest_validationError() {

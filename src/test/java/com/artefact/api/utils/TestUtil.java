@@ -77,7 +77,9 @@ public class TestUtil {
             Class<TResponse> response) {
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization" , "Bearer " + auth.getToken());
+        if(auth != null) {
+            headers.add("Authorization" , "Bearer " + auth.getToken());
+        }
 
         HttpEntity entity = new HttpEntity(headers);
 

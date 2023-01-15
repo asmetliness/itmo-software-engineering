@@ -10,6 +10,7 @@ import com.artefact.api.request.SuggestOrderRequest;
 import com.artefact.api.response.OrderResponse;
 import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.Auth;
+import com.artefact.api.utils.NotificationMessages;
 import com.artefact.api.utils.Streams;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,31 +40,6 @@ public class OrdersController {
     }
 
 
-    @PostMapping("/start/{id}")
-    public ResponseEntity<Object> startProgress(@PathVariable("id") long id) {
-
-        var userId = Auth.userId();
-        var user = userRepository.findById(userId).get();
-
-        if(!user.getRole().equals(Role.Stalker)) {
-            return new ResponseEntity<>(ApiErrors.Order.CantStart, HttpStatus.FORBIDDEN);
-        }
-        var orderOpt = orderRepository.findById(id);
-        if(orderOpt.isEmpty()) {
-            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
-        }
-        var order = orderOpt.get();
-
-        if(!order.getAssignedUserId().equals(userId)) {
-            return new ResponseEntity<>(ApiErrors.Order.CantStart, HttpStatus.FORBIDDEN);
-        }
-
-        order.setStatusId(StatusIds.InProgress);
-        orderRepository.save(order);
-
-        return getOrderResponse(order.getId());
-    }
-
 
 
 
@@ -86,7 +62,7 @@ public class OrdersController {
         var hucksters = userRepository.findByRole(Role.Huckster);
 
         var notifications = Streams.from(hucksters)
-                .map(u -> new Notification("Был создан заказ", u.getId(), order.getId()))
+                .map(u -> new Notification(NotificationMessages.Order.Created, u.getId(), order.getId()))
                 .toList();
         notificationRepository.saveAll(notifications);
 
@@ -151,6 +127,7 @@ public class OrdersController {
 
         var orderOpt = orderRepository.findById(id);
 
+        //TESTED
         if (orderOpt.isEmpty()) {
             return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
@@ -160,12 +137,14 @@ public class OrdersController {
             return new ResponseEntity<>(ApiErrors.Order.CantAccept, HttpStatus.FORBIDDEN);
         }
 
+        //TESTED
         if (role.equals(Role.Huckster)) {
 
             order.setAcceptedUserId(user.getId());
             order.setStatusId(StatusIds.AcceptedByHuckster);
 
-            notificationRepository.save(new Notification("Заказ был принят барыгой!",
+            //TESTED
+            notificationRepository.save(new Notification(NotificationMessages.Order.AcceptedByHuckster,
                     order.getCreatedUserId(),
                     order.getId()));
         }
@@ -175,11 +154,11 @@ public class OrdersController {
             order.setSuggestedUserId(null);
             order.setStatusId(StatusIds.AcceptedByStalker);
 
-            notificationRepository.save(new Notification("Заказ был принят сталкером!",
+            notificationRepository.save(new Notification(NotificationMessages.Order.AcceptedByStalker,
                     order.getAcceptedUserId(),
                     order.getId()));
 
-            notificationRepository.save(new Notification("Заказ был принят сталкером!",
+            notificationRepository.save(new Notification(NotificationMessages.Order.AcceptedByStalker,
                     order.getCreatedUserId(),
                     order.getId()));
         }
@@ -189,11 +168,11 @@ public class OrdersController {
             order.setSuggestedUserId(null);
             order.setStatusId(StatusIds.Sent);
 
-            notificationRepository.save(new Notification("Заказ был передан курьеру!",
+            notificationRepository.save(new Notification(NotificationMessages.Order.TransferredToCourier,
                     order.getAcceptedUserId(),
                     order.getId()));
 
-            notificationRepository.save(new Notification("Заказ был передан курьеру!",
+            notificationRepository.save(new Notification(NotificationMessages.Order.TransferredToCourier,
                     order.getCreatedUserId(),
                     order.getId()));
         }
@@ -239,7 +218,7 @@ public class OrdersController {
             order.setAcceptedUserId(null);
             order.setStatusId(StatusIds.New);
 
-            notificationRepository.save(new Notification("Ваш заказ был отклонен барыгой!",
+            notificationRepository.save(new Notification(NotificationMessages.Order.DeclinedByHuckster,
                     order.getCreatedUserId(),
                     order.getId()));
         }
@@ -248,7 +227,7 @@ public class OrdersController {
             order.setSuggestedUserId(null);
             order.setStatusId(StatusIds.AcceptedByHuckster);
 
-            notificationRepository.save(new Notification("Заказ был отклонен сталкером!",
+            notificationRepository.save(new Notification(NotificationMessages.Order.DeclinedByStalker,
                     order.getAcceptedUserId(),
                     order.getId()));
         }
@@ -258,7 +237,7 @@ public class OrdersController {
             order.setAcceptedCourierId(null);
             order.setStatusId(StatusIds.TransferredToHuckster);
 
-            notificationRepository.save(new Notification("Заказ был отклонен курьером!",
+            notificationRepository.save(new Notification(NotificationMessages.Order.DeclinedByCourier,
                     order.getAcceptedUserId(),
                     order.getId()));
         }
@@ -312,7 +291,7 @@ public class OrdersController {
         order.setSuggestedUserId(request.getUserId());
         orderRepository.save(order);
 
-        notificationRepository.save(new Notification("Вам был предложен заказ!",
+        notificationRepository.save(new Notification(NotificationMessages.Order.Suggested,
                 request.getUserId(),
                 request.getOrderId()));
 
@@ -330,6 +309,31 @@ public class OrdersController {
             return order.getStatusId().equals(StatusIds.AcceptedByHuckster);
         }
         return false;
+    }
+
+    @PostMapping("/start/{id}")
+    public ResponseEntity<Object> startProgress(@PathVariable("id") long id) {
+
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        if(!user.getRole().equals(Role.Stalker)) {
+            return new ResponseEntity<>(ApiErrors.Order.CantStart, HttpStatus.FORBIDDEN);
+        }
+        var orderOpt = orderRepository.findById(id);
+        if(orderOpt.isEmpty()) {
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
+        }
+        var order = orderOpt.get();
+
+        if(!order.getAssignedUserId().equals(userId)) {
+            return new ResponseEntity<>(ApiErrors.Order.CantStart, HttpStatus.FORBIDDEN);
+        }
+
+        order.setStatusId(StatusIds.InProgress);
+        orderRepository.save(order);
+
+        return getOrderResponse(order.getId());
     }
 
     @PostMapping("/complete/{id}")

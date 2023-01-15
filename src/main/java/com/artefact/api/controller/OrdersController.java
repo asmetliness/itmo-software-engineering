@@ -307,7 +307,8 @@ public class OrdersController {
             return false;
         }
         if(user.get().getRole().equals(Role.Courier)) {
-            return order.getStatusId().equals(StatusIds.TransferredToHuckster);
+            return order.getStatusId().equals(StatusIds.TransferredToHuckster)
+                    || order.getStatusId().equals(StatusIds.AcceptedByHuckster);
         }
         if(user.get().getRole().equals(Role.Stalker)) {
             return order.getStatusId().equals(StatusIds.AcceptedByHuckster);

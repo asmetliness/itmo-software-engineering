@@ -4,11 +4,14 @@ package com.artefact.api.order;
 import com.artefact.api.ApiApplication;
 import com.artefact.api.consts.Role;
 import com.artefact.api.consts.StatusIds;
+import com.artefact.api.model.Order;
+import com.artefact.api.model.User;
 import com.artefact.api.repository.ArtifactRepository;
 import com.artefact.api.repository.NotificationRepository;
 import com.artefact.api.repository.OrderRepository;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.CreateOrderRequest;
+import com.artefact.api.request.SuggestOrderRequest;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.response.ErrorResponse;
 import com.artefact.api.response.NotificationResponse;
@@ -626,6 +629,185 @@ public class OrderModuleTests {
         assertUnauthorized(declineResult);
     }
 
+
+    @Test
+    void order_suggest_toStalker() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var suggestRequest= getSuggestRequest(stalker.getUser(), result.getBody().getOrder());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                OrderResponse.class);
+        assertOK(suggestResult);
+        assertNotNull(suggestResult.getBody().getSuggestedUser());
+        assertEquals(stalker.getUser().getId(), suggestResult.getBody().getSuggestedUser().getId());
+        assertEquals(StatusIds.AcceptedByHuckster, suggestResult.getBody().getOrder().getStatusId());
+        assertNull(suggestResult.getBody().getAssignedUser());
+    }
+
+
+    @Test
+    void order_suggest_validationError() {
+        orderSuggestHelper(s -> {
+            s.setOrderId(null);
+        });
+        orderSuggestHelper(s -> {
+            s.setUserId(null);
+        });
+    }
+
+    @Test
+    void order_suggest_unauthorizedError() {
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                null,
+                null,
+                ErrorResponse.class);
+
+        assertUnauthorized(suggestResult);
+    }
+
+    @Test
+    void order_suggest_notFoundError() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var suggestRequest= getSuggestRequest(stalker.getUser(), result.getBody().getOrder());
+        suggestRequest.setOrderId(123123L);
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, suggestResult.getStatusCode());
+        assertEquals(ApiErrors.Order.NotFound, suggestResult.getBody());
+    }
+
+    @Test
+    void order_suggest_wrongUserError() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var suggestRequest= getSuggestRequest(stalker.getUser(), result.getBody().getOrder());
+
+        var suggestResultWrongRole = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                client,
+                suggestRequest,
+                ErrorResponse.class);
+        assertEquals(HttpStatus.FORBIDDEN, suggestResultWrongRole.getStatusCode());
+        assertEquals(ApiErrors.Order.AccessError, suggestResultWrongRole.getBody());
+
+        suggestRequest.setUserId(123123L);
+        var suggestResultNotFound = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.FORBIDDEN, suggestResultNotFound.getStatusCode());
+        assertEquals(ApiErrors.Order.CantSuggestToUser, suggestResultNotFound.getBody());
+
+        suggestRequest.setUserId(client.getUser().getId());
+        var suggestResultWrongUser = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.FORBIDDEN, suggestResultWrongUser.getStatusCode());
+        assertEquals(ApiErrors.Order.CantSuggestToUser, suggestResultWrongUser.getBody());
+
+
+
+    }
+
+
+
+
+    void orderSuggestHelper(Consumer<SuggestOrderRequest> func) {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var suggestRequest= getSuggestRequest(stalker.getUser(), result.getBody().getOrder());
+        func.accept(suggestRequest);
+
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                ErrorResponse.class);
+        assertValidationError(suggestResult);
+    }
+
     void orderTestHelper(Consumer<CreateOrderRequest> func) {
         var client = TestUtil.registerRole(restTemplate, Role.Client);
 
@@ -649,5 +831,10 @@ public class OrderModuleTests {
                 artifact.getPrice(),
                 new Date(),
                 "spb");
+    }
+
+    private SuggestOrderRequest getSuggestRequest(User user, Order order) {
+
+        return new SuggestOrderRequest(order.getId(), user.getId());
     }
 }

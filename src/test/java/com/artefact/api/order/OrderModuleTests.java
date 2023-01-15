@@ -367,11 +367,11 @@ public class OrderModuleTests {
         assertOK(result);
 
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
-        assertEquals(result.getBody().getOrder().getId(), acceptResult.getBody().getOrder().getId());
+        assertEquals(result.getBody().getOrder().getId(), Objects.requireNonNull(acceptResult.getBody()).getOrder().getId());
         assertEquals(StatusIds.AcceptedByHuckster, acceptResult.getBody().getOrder().getStatusId());
         assertEquals(huckster.getUser().getId(), acceptResult.getBody().getAcceptedUser().getId());
         assertNull(acceptResult.getBody().getAssignedUser());
@@ -380,7 +380,7 @@ public class OrderModuleTests {
         var clientNotifications = getNotifications(client);
 
         assertOK(clientNotifications);
-        assertTrue(Arrays.stream(clientNotifications.getBody()).anyMatch(n ->
+        assertTrue(Arrays.stream(Objects.requireNonNull(clientNotifications.getBody())).anyMatch(n ->
                 n.getOrderId().equals(acceptResult.getBody().getOrder().getId())
                         && n.getText().equals(NotificationMessages.Order.AcceptedByHuckster)
         ));
@@ -401,7 +401,7 @@ public class OrderModuleTests {
         assertOK(result);
 
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -454,7 +454,7 @@ public class OrderModuleTests {
         assertOK(result);
 
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 null,
                 ErrorResponse.class);
 
@@ -476,7 +476,7 @@ public class OrderModuleTests {
         assertOK(result);
 
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -486,7 +486,7 @@ public class OrderModuleTests {
                 huckster,
                 OrderResponse.class);
         assertOK(declineResult);
-        assertEquals(result.getBody().getOrder().getId(), declineResult.getBody().getOrder().getId());
+        assertEquals(result.getBody().getOrder().getId(), Objects.requireNonNull(declineResult.getBody()).getOrder().getId());
         assertEquals(StatusIds.New, declineResult.getBody().getOrder().getStatusId());
         assertNull(declineResult.getBody().getAcceptedUser());
         assertNull(declineResult.getBody().getAssignedUser());
@@ -496,8 +496,8 @@ public class OrderModuleTests {
         var clientNotifications = getNotifications(client);
 
         assertOK(clientNotifications);
-        assertTrue(Arrays.stream(clientNotifications.getBody()).anyMatch(n ->
-                n.getOrderId().equals(acceptResult.getBody().getOrder().getId())
+        assertTrue(Arrays.stream(Objects.requireNonNull(clientNotifications.getBody())).anyMatch(n ->
+                n.getOrderId().equals(Objects.requireNonNull(acceptResult.getBody()).getOrder().getId())
                         && n.getText().equals(NotificationMessages.Order.DeclinedByHuckster)
         ));
     }
@@ -540,7 +540,7 @@ public class OrderModuleTests {
         assertOK(result);
 
         var declineResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/decline/" + result.getBody().getOrder().getId(),
+                "/api/orders/decline/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 null,
                 ErrorResponse.class);
 
@@ -564,7 +564,7 @@ public class OrderModuleTests {
         assertOK(result);
 
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -576,14 +576,14 @@ public class OrderModuleTests {
                 suggestRequest,
                 OrderResponse.class);
         assertOK(suggestResult);
-        assertNotNull(suggestResult.getBody().getSuggestedUser());
+        assertNotNull(Objects.requireNonNull(suggestResult.getBody()).getSuggestedUser());
         assertEquals(stalker.getUser().getId(), suggestResult.getBody().getSuggestedUser().getId());
         assertEquals(StatusIds.AcceptedByHuckster, suggestResult.getBody().getOrder().getStatusId());
         assertNull(suggestResult.getBody().getAssignedUser());
 
         var stalkerNotifications = getNotifications(stalker);
         assertOK(stalkerNotifications);
-        assertTrue(Arrays.stream(stalkerNotifications.getBody()).anyMatch(n ->
+        assertTrue(Arrays.stream(Objects.requireNonNull(stalkerNotifications.getBody())).anyMatch(n ->
                 n.getOrderId().equals(result.getBody().getOrder().getId())
                         && n.getText().equals(NotificationMessages.Order.Suggested)
         ));
@@ -626,7 +626,7 @@ public class OrderModuleTests {
         assertOK(result);
 
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -659,7 +659,7 @@ public class OrderModuleTests {
         assertOK(result);
 
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -709,7 +709,7 @@ public class OrderModuleTests {
                 OrderResponse.class);
         assertOK(result);
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -727,7 +727,7 @@ public class OrderModuleTests {
                 stalker,
                 OrderResponse[].class);
         assertOK(stalkerAvailable);
-        assertTrue(stalkerAvailable.getBody().length > 0);
+        assertTrue(Objects.requireNonNull(stalkerAvailable.getBody()).length > 0);
         assertTrue(Arrays.stream(stalkerAvailable.getBody()).anyMatch(o ->
                 o.getOrder().getId().equals(result.getBody().getOrder().getId())));
     }
@@ -746,7 +746,7 @@ public class OrderModuleTests {
                 OrderResponse.class);
         assertOK(result);
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -764,20 +764,20 @@ public class OrderModuleTests {
                 stalker,
                 OrderResponse.class);
         assertOK(stalkerAcceptResult);
-        assertEquals(StatusIds.AcceptedByStalker, stalkerAcceptResult.getBody().getOrder().getStatusId());
+        assertEquals(StatusIds.AcceptedByStalker, Objects.requireNonNull(stalkerAcceptResult.getBody()).getOrder().getStatusId());
         assertEquals(stalker.getUser().getId(), stalkerAcceptResult.getBody().getAssignedUser().getId());
         assertEquals(huckster.getUser().getId(), stalkerAcceptResult.getBody().getAcceptedUser().getId());
         assertNull(stalkerAcceptResult.getBody().getSuggestedUser());
 
         var hucksterNotifications = getNotifications(huckster);
         assertOK(hucksterNotifications);
-        assertTrue(Arrays.stream(hucksterNotifications.getBody()).anyMatch(n ->
+        assertTrue(Arrays.stream(Objects.requireNonNull(hucksterNotifications.getBody())).anyMatch(n ->
                 n.getOrderId().equals(result.getBody().getOrder().getId()) &&
                         n.getText().equals(NotificationMessages.Order.AcceptedByStalker)));
 
         var clientNotifications = getNotifications(client);
         assertOK(clientNotifications);
-        assertTrue(Arrays.stream(clientNotifications.getBody()).anyMatch(n ->
+        assertTrue(Arrays.stream(Objects.requireNonNull(clientNotifications.getBody())).anyMatch(n ->
                 n.getOrderId().equals(result.getBody().getOrder().getId()) &&
                 n.getText().equals(NotificationMessages.Order.AcceptedByStalker)));
 
@@ -798,7 +798,7 @@ public class OrderModuleTests {
                 OrderResponse.class);
         assertOK(result);
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -816,14 +816,14 @@ public class OrderModuleTests {
                 stalker,
                 OrderResponse.class);
         assertOK(stalkerDeclineResult);
-        assertEquals(StatusIds.AcceptedByHuckster, stalkerDeclineResult.getBody().getOrder().getStatusId());
+        assertEquals(StatusIds.AcceptedByHuckster, Objects.requireNonNull(stalkerDeclineResult.getBody()).getOrder().getStatusId());
         assertEquals(huckster.getUser().getId(), stalkerDeclineResult.getBody().getAcceptedUser().getId());
         assertNull(stalkerDeclineResult.getBody().getAssignedUser());
         assertNull(stalkerDeclineResult.getBody().getSuggestedUser());
 
         var hucksterNotifications = getNotifications(huckster);
         assertOK(hucksterNotifications);
-        assertTrue(Arrays.stream(hucksterNotifications.getBody()).anyMatch(n ->
+        assertTrue(Arrays.stream(Objects.requireNonNull(hucksterNotifications.getBody())).anyMatch(n ->
                 n.getOrderId().equals(result.getBody().getOrder().getId()) &&
                         n.getText().equals(NotificationMessages.Order.DeclinedByStalker)));
     }
@@ -842,7 +842,7 @@ public class OrderModuleTests {
                 OrderResponse.class);
         assertOK(result);
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -866,7 +866,7 @@ public class OrderModuleTests {
                 stalker,
                 OrderResponse[].class);
         assertOK(stalkerGetAll);
-        assertTrue(Arrays.stream(stalkerGetAll.getBody()).anyMatch(o ->
+        assertTrue(Arrays.stream(Objects.requireNonNull(stalkerGetAll.getBody())).anyMatch(o ->
                 o.getOrder().getId().equals(result.getBody().getOrder().getId())));
     }
 
@@ -885,7 +885,7 @@ public class OrderModuleTests {
                 OrderResponse.class);
         assertOK(result);
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -909,7 +909,7 @@ public class OrderModuleTests {
                 stalker,
                 OrderResponse.class);
         assertOK(orderStartResult);
-        assertEquals(StatusIds.InProgress, orderStartResult.getBody().getOrder().getStatusId());
+        assertEquals(StatusIds.InProgress, Objects.requireNonNull(orderStartResult.getBody()).getOrder().getStatusId());
     }
 
     @Test
@@ -946,7 +946,7 @@ public class OrderModuleTests {
         assertOK(result);
 
         var orderStartResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/start/" + result.getBody().getOrder().getId(),
+                "/api/orders/start/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 client,
                 ErrorResponse.class);
 
@@ -968,7 +968,7 @@ public class OrderModuleTests {
                 OrderResponse.class);
         assertOK(result);
         var acceptResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 huckster,
                 OrderResponse.class);
         assertOK(acceptResult);
@@ -998,7 +998,7 @@ public class OrderModuleTests {
                 stalker,
                 OrderResponse.class);
         assertOK(orderCompleteResult);
-        assertEquals(StatusIds.TransferredToHuckster, orderCompleteResult.getBody().getOrder().getStatusId());
+        assertEquals(StatusIds.TransferredToHuckster, Objects.requireNonNull(orderCompleteResult.getBody()).getOrder().getStatusId());
     }
 
     @Test
@@ -1037,7 +1037,7 @@ public class OrderModuleTests {
         assertOK(result);
 
         var orderStartResult = TestUtil.postAuthorized(restTemplate,
-                "/api/orders/complete/" + result.getBody().getOrder().getId(),
+                "/api/orders/complete/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
                 client,
                 ErrorResponse.class);
 

@@ -15,6 +15,7 @@ import com.artefact.api.response.NotificationResponse;
 import com.artefact.api.response.OrderResponse;
 import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.TestUtil;
+import jdk.jshell.spi.ExecutionControl;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static com.artefact.api.utils.TestUtil.*;
@@ -73,9 +75,8 @@ public class OrderModuleTests {
                 request,
                 OrderResponse.class);
 
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        assertNotNull(result.getBody());
-        assertEquals(request.getArtifactId(), result.getBody().getArtifact().getId());
+        assertOK(result);
+        assertEquals(request.getArtifactId(), Objects.requireNonNull(result.getBody()).getArtifact().getId());
         assertEquals(request.getDeliveryAddress(), result.getBody().getOrder().getDeliveryAddress());
         assertEquals(request.getPrice(), result.getBody().getOrder().getPrice());
         assertEquals(StatusIds.New, result.getBody().getOrder().getStatusId());
@@ -107,13 +108,13 @@ public class OrderModuleTests {
                 stalker, huckster, informer, weaponDealer, courier
         };
 
-        for(int i = 0; i < roles.length; ++i) {
+        for (AuthResponse role : roles) {
 
             var request = getCreateRequest();
 
             var result = TestUtil.postAuthorized(restTemplate,
                     "/api/orders",
-                    roles[i],
+                    role,
                     request,
                     ErrorResponse.class);
 
@@ -146,7 +147,7 @@ public class OrderModuleTests {
                 client,
                 request,
                 OrderResponse.class);
-        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertOK(result);
 
         var hucksterNotifications  = getAuthorized(
                 restTemplate,
@@ -154,11 +155,10 @@ public class OrderModuleTests {
                 huckster,
                 NotificationResponse[].class);
 
-        assertEquals(HttpStatus.OK, hucksterNotifications.getStatusCode());
-        assertNotNull(hucksterNotifications.getBody());
-        assertTrue(hucksterNotifications.getBody().length > 0);
+        assertOK(result);
+        assertTrue(Objects.requireNonNull(hucksterNotifications.getBody()).length > 0);
         assertTrue(Arrays.stream(hucksterNotifications.getBody()).anyMatch(n ->
-                n.getOrderId().equals(result.getBody().getOrder().getId())));
+                n.getOrderId().equals(Objects.requireNonNull(result.getBody()).getOrder().getId())));
 
     }
 
@@ -172,15 +172,14 @@ public class OrderModuleTests {
                 client,
                 request,
                 OrderResponse.class);
-        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertOK(result);
 
         var getResult = TestUtil.getAuthorized(restTemplate,
                 "/api/orders/" + result.getBody().getOrder().getId(),
                 client,
                 OrderResponse.class);
 
-        assertEquals(HttpStatus.OK, getResult.getStatusCode());
-        assertNotNull(getResult.getBody());
+        assertOK(result);
         assertEquals(result.getBody().getOrder().getId(), getResult.getBody().getOrder().getId());
     }
 
@@ -194,7 +193,7 @@ public class OrderModuleTests {
                 client,
                 request,
                 OrderResponse.class);
-        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertOK(result);
 
         var getResult = restTemplate.getForEntity(
                 "/api/orders/" + result.getBody().getOrder().getId(),
@@ -213,7 +212,7 @@ public class OrderModuleTests {
                 client,
                 request,
                 OrderResponse.class);
-        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertOK(result);
 
         var getResult = TestUtil.getAuthorized(restTemplate,
                 "/api/orders/" + 1231232,
@@ -223,6 +222,146 @@ public class OrderModuleTests {
         assertEquals(HttpStatus.NOT_FOUND, getResult.getStatusCode());
         assertEquals(ApiErrors.Order.NotFound, getResult.getBody());
     }
+
+    @Test
+    void order_getAll_client() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+
+        var request = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                request,
+                OrderResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var ordersResult = TestUtil.getAuthorized(
+                restTemplate,
+                "/api/orders",
+                client,
+                OrderResponse[].class
+        );
+        assertOK(ordersResult);
+
+        assertTrue(Objects.requireNonNull(ordersResult.getBody()).length > 0);
+        assertTrue(Arrays.stream(ordersResult.getBody()).anyMatch(o ->
+                o.getOrder().getId().equals(Objects.requireNonNull(result.getBody()).getOrder().getId())));
+    }
+
+    @Test
+    void order_getAll_huckster() {
+        assertTrue(false);
+    }
+    @Test
+    void order_getAll_stalker() {
+        assertTrue(false);
+    }
+
+    @Test
+    void order_getAll_default() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var informer = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var request = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                request,
+                OrderResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var ordersResult = TestUtil.getAuthorized(
+                restTemplate,
+                "/api/orders",
+                informer,
+                OrderResponse[].class
+        );
+        assertOK(ordersResult);
+        assertEquals(0, Objects.requireNonNull(ordersResult.getBody()).length);
+    }
+
+
+    @Test
+    void order_getAll_unauthorizedError() {
+        var ordersResult = TestUtil.getAuthorized(
+                restTemplate,
+                "/api/orders",
+                null,
+                ErrorResponse.class
+        );
+        assertUnauthorized(ordersResult);
+    }
+
+
+    @Test
+    void order_getAvailable_huckster() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var request = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                request,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var hucksterAvailable = TestUtil.getAuthorized(restTemplate,
+                "/api/orders/available",
+                huckster,
+                OrderResponse[].class);
+
+        assertOK(hucksterAvailable);
+        assertTrue(Objects.requireNonNull(hucksterAvailable.getBody()).length > 0);
+        assertTrue(Arrays.stream(hucksterAvailable.getBody()).anyMatch(o ->
+                o.getOrder().getId().equals(Objects.requireNonNull(result.getBody()).getOrder().getId())));
+    }
+
+    @Test
+    void order_getAvailable_stalker() {
+        assertTrue(false);
+    }
+
+    @Test
+    void order_getAvailable_courier() {
+        assertTrue(false);
+    }
+
+    @Test
+    void order_getAvailable_default() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var informer = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var request = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                request,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var informerAvailable = TestUtil.getAuthorized(restTemplate,
+                "/api/orders/available",
+                informer,
+                OrderResponse[].class);
+
+        assertOK(informerAvailable);
+        assertEquals(0, Objects.requireNonNull(informerAvailable.getBody()).length);
+
+    }
+    @Test
+    void order_getAvailable_unauthorizedError() {
+        var ordersResult = TestUtil.getAuthorized(
+                restTemplate,
+                "/api/orders/available",
+                null,
+                ErrorResponse.class
+        );
+        assertUnauthorized(ordersResult);
+    }
+
 
 
     void orderTestHelper(Consumer<CreateOrderRequest> func) {
@@ -244,11 +383,9 @@ public class OrderModuleTests {
 
         var artifact = artifactRepository.findAll().get(0);
 
-        var createRequest = new CreateOrderRequest(artifact.getId(),
+        return new CreateOrderRequest(artifact.getId(),
                 artifact.getPrice(),
                 new Date(),
                 "spb");
-
-        return createRequest;
     }
 }

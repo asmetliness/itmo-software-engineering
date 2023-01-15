@@ -128,4 +128,10 @@ public class TestUtil {
 
         return restTemplate.exchange(url, HttpMethod.DELETE, entity, response);
     }
+
+
+    public static <T> void assertOK(ResponseEntity<T> response) {
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
+    }
 }

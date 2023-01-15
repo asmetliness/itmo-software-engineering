@@ -64,160 +64,82 @@ public class OrdersController {
         return getOrderResponse(order.getId());
     }
 
-    @PostMapping("/complete/{id}")
-    public ResponseEntity<Object> completeOrder(@PathVariable("id") long id) {
 
+
+
+    @PostMapping
+    public ResponseEntity<Object> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
-
-        var orderOpt = orderRepository.findById(id);
-        if(orderOpt.isEmpty()) {
-            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
-        }
-        var order = orderOpt.get();
-
-        if(!canCompleteOrder(user, order)) {
-            return new ResponseEntity<>(ApiErrors.Order.CantComplete, HttpStatus.NOT_FOUND);
+        if(!user.getRole().equals(Role.Client)) {
+            return new ResponseEntity<>(ApiErrors.Order.CantCreate, HttpStatus.FORBIDDEN);
         }
 
-        if(user.getRole().equals(Role.Stalker)) {
-            order.setStatusId(StatusIds.TransferredToHuckster);
-        }
-        if(user.getRole().equals(Role.Client)) {
-            order.setStatusId(StatusIds.Completed);
-        }
+        var order = new Order();
+        order.setArtifactId(request.getArtifactId());
+        order.setCreatedUserId(userId);
+        order.setStatusId(StatusIds.New);
+        order.setPrice(request.getPrice());
+        order.setDeliveryAddress(request.getDeliveryAddress());
         orderRepository.save(order);
+
+        var hucksters = userRepository.findByRole(Role.Huckster);
+
+        var notifications = Streams.from(hucksters)
+                .map(u -> new Notification("Был создан заказ", u.getId(), order.getId()))
+                .toList();
+        notificationRepository.saveAll(notifications);
 
         return getOrderResponse(order.getId());
     }
 
-    private Boolean canCompleteOrder(User user, Order order) {
-        if(user.getRole().equals(Role.Stalker)) {
-            return order.getStatusId().equals(StatusIds.InProgress) &&
-                    order.getAcceptedUserId().equals(user.getId());
-        }
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> getOrderResponse(@PathVariable("id") Long id) {
 
-        if(user.getRole().equals(Role.Client)) {
-            return order.getStatusId().equals(StatusIds.Delivered) &&
-                    order.getCreatedUserId().equals(user.getId());
-        }
-
-        return false;
-    }
-
-    @PostMapping("/suggest")
-    public ResponseEntity<Object> suggestOrder(@Valid  @RequestBody SuggestOrderRequest request) {
-
-        var userId = Auth.userId();
-        var user = userRepository.findById(userId).get();
-
-        var orderOpt = orderRepository.findById(request.getOrderId());
-        if(orderOpt.isEmpty()) {
+        var order = orderRepository.findByOrderId(id);
+        if (order.isEmpty()) {
             return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
-        var order = orderOpt.get();
 
-        if(!user.getRole().equals(Role.Huckster) || !order.getAcceptedUserId().equals(userId)) {
-            return new ResponseEntity<>(ApiErrors.Order.AccessError, HttpStatus.FORBIDDEN);
-        }
-        var suggestedUser = userRepository.findById(request.getUserId());
-
-        if(!canSuggestToUser(suggestedUser, order)) {
-            return new ResponseEntity<>(ApiErrors.Order.CantSuggestToUser, HttpStatus.FORBIDDEN);
-        }
-
-        order.setSuggestedUserId(request.getUserId());
-        orderRepository.save(order);
-
-        notificationRepository.save(new Notification("Вам был предложен заказ!",
-                request.getUserId(),
-                request.getOrderId()));
-
-        return getOrderResponse(request.getOrderId());
+        return new ResponseEntity<>(new OrderResponse(order.get()), HttpStatus.OK);
     }
 
-    private Boolean canSuggestToUser(Optional<User> user, Order order) {
-        if(user.isEmpty()) {
-            return false;
-        }
-        if(user.get().getRole().equals(Role.Courier)) {
-            return order.getStatusId().equals(StatusIds.TransferredToHuckster);
-        }
-        if(user.get().getRole().equals(Role.Stalker)) {
-            return order.getStatusId().equals(StatusIds.AcceptedByHuckster);
-        }
-        return false;
-    }
-
-    @PostMapping("/decline/{id}")
-    public ResponseEntity<Object> declineOrder(@PathVariable("id") long id) {
+    @GetMapping
+    public ResponseEntity<Iterable<OrderResponse>> getOrderList() {
         var userId = Auth.userId();
 
-        var user = userRepository.findById(userId).get();
-        var role = user.getRole();
+        var user = userRepository.findById(userId);
+        var role = user.get().getRole();
 
-        var orderOpt = orderRepository.findById(id);
+        var orders = switch (role) {
+            case Client -> orderRepository.findByCreatedUserId(userId); //TESTED
+            case Stalker -> orderRepository.findByAssignedUserId(userId);
+            case Huckster -> orderRepository.findByAcceptedUserId(userId);
+            default -> new ArrayList<IOrderResult>(); // TESTED
+        };
 
-        if (orderOpt.isEmpty()) {
-            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
-        }
-        var order = orderOpt.get();
+        var response = Streams.from(orders).map(OrderResponse::new).toList();
 
-        if(!canDeclineOrder(user, order)) {
-            return new ResponseEntity<>(ApiErrors.Order.CantDecline, HttpStatus.FORBIDDEN);
-        }
 
-        if (role.equals(Role.Huckster)) {
-            order.setAcceptedUserId(null);
-            order.setStatusId(StatusIds.New);
-
-            notificationRepository.save(new Notification("Ваш заказ был отклонен барыгой!",
-                    order.getCreatedUserId(),
-                    order.getId()));
-        }
-        if (role.equals(Role.Stalker)) {
-            order.setAssignedUserId(null);
-            order.setSuggestedUserId(null);
-            order.setStatusId(StatusIds.AcceptedByHuckster);
-
-            notificationRepository.save(new Notification("Заказ был отклонен сталкером!",
-                    order.getAcceptedUserId(),
-                    order.getId()));
-        }
-
-        if(role.equals(Role.Courier)) {
-            order.setSuggestedUserId(null);
-            order.setAcceptedCourierId(null);
-            order.setStatusId(StatusIds.TransferredToHuckster);
-
-            notificationRepository.save(new Notification("Заказ был отклонен курьером!",
-                    order.getAcceptedUserId(),
-                    order.getId()));
-        }
-
-        orderRepository.save(order);
-        return getOrderResponse(id);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    private Boolean canDeclineOrder(User user, Order order) {
-        if(user.getRole().equals(Role.Huckster)) {
-            return order.getStatusId().equals(StatusIds.New) ||
-                    (order.getStatusId().equals(StatusIds.AcceptedByHuckster)
-                            && order.getAcceptedUserId().equals(user.getId()));
-        }
+    @GetMapping("/available")
+    public ResponseEntity<Iterable<OrderResponse>> getAvailableOrders() {
+        var userId = Auth.userId();
 
-        if(user.getRole().equals(Role.Stalker)) {
-            return order.getStatusId().equals(StatusIds.AcceptedByHuckster) ||
-                    (order.getStatusId().equals(StatusIds.AcceptedByStalker)
-                            && order.getAssignedUserId().equals(user.getId()));
-        }
+        var user = userRepository.findById(userId);
 
-        if(user.getRole().equals(Role.Courier)) {
-            return order.getStatusId().equals(StatusIds.TransferredToHuckster) ||
-                    (order.getStatusId().equals(StatusIds.Sent) &&
-                            order.getAcceptedCourierId().equals(user.getId()));
-        }
-        return false;
+        var orders = switch (user.get().getRole()) {
+            case Huckster -> orderRepository.findOrderByStatus(StatusIds.New); // TESTED
+
+            case Stalker, Courier -> orderRepository.findSuggestedOrders(userId);
+            default -> new ArrayList<IOrderResult>(); //TESTED
+        };
+        var response = Streams.from(orders)
+                .map(OrderResponse::new).toList();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/accept/{id}")
@@ -295,78 +217,160 @@ public class OrdersController {
         return false;
     }
 
-    @PostMapping
-    public ResponseEntity<Object> createOrder(@Valid @RequestBody CreateOrderRequest request) {
+    @PostMapping("/decline/{id}")
+    public ResponseEntity<Object> declineOrder(@PathVariable("id") long id) {
         var userId = Auth.userId();
+
         var user = userRepository.findById(userId).get();
-        if(!user.getRole().equals(Role.Client)) {
-            return new ResponseEntity<>(ApiErrors.Order.CantCreate, HttpStatus.FORBIDDEN);
+        var role = user.getRole();
+
+        var orderOpt = orderRepository.findById(id);
+
+        if (orderOpt.isEmpty()) {
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
+        }
+        var order = orderOpt.get();
+
+        if(!canDeclineOrder(user, order)) {
+            return new ResponseEntity<>(ApiErrors.Order.CantDecline, HttpStatus.FORBIDDEN);
         }
 
-        var order = new Order();
-        order.setArtifactId(request.getArtifactId());
-        order.setCreatedUserId(userId);
-        order.setStatusId(StatusIds.New);
-        order.setPrice(request.getPrice());
-        order.setDeliveryAddress(request.getDeliveryAddress());
+        if (role.equals(Role.Huckster)) {
+            order.setAcceptedUserId(null);
+            order.setStatusId(StatusIds.New);
+
+            notificationRepository.save(new Notification("Ваш заказ был отклонен барыгой!",
+                    order.getCreatedUserId(),
+                    order.getId()));
+        }
+        if (role.equals(Role.Stalker)) {
+            order.setAssignedUserId(null);
+            order.setSuggestedUserId(null);
+            order.setStatusId(StatusIds.AcceptedByHuckster);
+
+            notificationRepository.save(new Notification("Заказ был отклонен сталкером!",
+                    order.getAcceptedUserId(),
+                    order.getId()));
+        }
+
+        if(role.equals(Role.Courier)) {
+            order.setSuggestedUserId(null);
+            order.setAcceptedCourierId(null);
+            order.setStatusId(StatusIds.TransferredToHuckster);
+
+            notificationRepository.save(new Notification("Заказ был отклонен курьером!",
+                    order.getAcceptedUserId(),
+                    order.getId()));
+        }
+
+        orderRepository.save(order);
+        return getOrderResponse(id);
+    }
+
+    private Boolean canDeclineOrder(User user, Order order) {
+        if(user.getRole().equals(Role.Huckster)) {
+            return order.getStatusId().equals(StatusIds.New) ||
+                    (order.getStatusId().equals(StatusIds.AcceptedByHuckster)
+                            && order.getAcceptedUserId().equals(user.getId()));
+        }
+
+        if(user.getRole().equals(Role.Stalker)) {
+            return order.getStatusId().equals(StatusIds.AcceptedByHuckster) ||
+                    (order.getStatusId().equals(StatusIds.AcceptedByStalker)
+                            && order.getAssignedUserId().equals(user.getId()));
+        }
+
+        if(user.getRole().equals(Role.Courier)) {
+            return order.getStatusId().equals(StatusIds.TransferredToHuckster) ||
+                    (order.getStatusId().equals(StatusIds.Sent) &&
+                            order.getAcceptedCourierId().equals(user.getId()));
+        }
+        return false;
+    }
+
+    @PostMapping("/suggest")
+    public ResponseEntity<Object> suggestOrder(@Valid  @RequestBody SuggestOrderRequest request) {
+
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        var orderOpt = orderRepository.findById(request.getOrderId());
+        if(orderOpt.isEmpty()) {
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
+        }
+        var order = orderOpt.get();
+
+        if(!user.getRole().equals(Role.Huckster) || !order.getAcceptedUserId().equals(userId)) {
+            return new ResponseEntity<>(ApiErrors.Order.AccessError, HttpStatus.FORBIDDEN);
+        }
+        var suggestedUser = userRepository.findById(request.getUserId());
+
+        if(!canSuggestToUser(suggestedUser, order)) {
+            return new ResponseEntity<>(ApiErrors.Order.CantSuggestToUser, HttpStatus.FORBIDDEN);
+        }
+
+        order.setSuggestedUserId(request.getUserId());
         orderRepository.save(order);
 
-        var hucksters = userRepository.findByRole(Role.Huckster);
+        notificationRepository.save(new Notification("Вам был предложен заказ!",
+                request.getUserId(),
+                request.getOrderId()));
 
-        var notifications = Streams.from(hucksters)
-                .map(u -> new Notification("Был создан заказ", u.getId(), order.getId()))
-                .toList();
-        notificationRepository.saveAll(notifications);
+        return getOrderResponse(request.getOrderId());
+    }
+
+    private Boolean canSuggestToUser(Optional<User> user, Order order) {
+        if(user.isEmpty()) {
+            return false;
+        }
+        if(user.get().getRole().equals(Role.Courier)) {
+            return order.getStatusId().equals(StatusIds.TransferredToHuckster);
+        }
+        if(user.get().getRole().equals(Role.Stalker)) {
+            return order.getStatusId().equals(StatusIds.AcceptedByHuckster);
+        }
+        return false;
+    }
+
+    @PostMapping("/complete/{id}")
+    public ResponseEntity<Object> completeOrder(@PathVariable("id") long id) {
+
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        var orderOpt = orderRepository.findById(id);
+        if(orderOpt.isEmpty()) {
+            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
+        }
+        var order = orderOpt.get();
+
+        if(!canCompleteOrder(user, order)) {
+            return new ResponseEntity<>(ApiErrors.Order.CantComplete, HttpStatus.NOT_FOUND);
+        }
+
+        if(user.getRole().equals(Role.Stalker)) {
+            order.setStatusId(StatusIds.TransferredToHuckster);
+        }
+        if(user.getRole().equals(Role.Client)) {
+            order.setStatusId(StatusIds.Completed);
+        }
+        orderRepository.save(order);
 
         return getOrderResponse(order.getId());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Object> getOrderResponse(@PathVariable("id") Long id) {
-
-        var order = orderRepository.findByOrderId(id);
-        if (order.isEmpty()) {
-            return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
+    private Boolean canCompleteOrder(User user, Order order) {
+        if(user.getRole().equals(Role.Stalker)) {
+            return order.getStatusId().equals(StatusIds.InProgress) &&
+                    order.getAcceptedUserId().equals(user.getId());
         }
 
-        return new ResponseEntity<>(new OrderResponse(order.get()), HttpStatus.OK);
-    }
+        if(user.getRole().equals(Role.Client)) {
+            return order.getStatusId().equals(StatusIds.Delivered) &&
+                    order.getCreatedUserId().equals(user.getId());
+        }
 
-    @GetMapping
-    public ResponseEntity<Iterable<OrderResponse>> getOrderList() {
-        var userId = Auth.userId();
-
-        var user = userRepository.findById(userId);
-        var role = user.get().getRole();
-
-        var orders = switch (role) {
-            case Client -> orderRepository.findByCreatedUserId(userId);
-            case Stalker -> orderRepository.findByAssignedUserId(userId);
-            case Huckster -> orderRepository.findByAcceptedUserId(userId);
-            default -> new ArrayList<IOrderResult>();
-        };
-
-        var response = Streams.from(orders).map(OrderResponse::new).toList();
-
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    @GetMapping("/available")
-    public ResponseEntity<Iterable<OrderResponse>> getAvailableOrders() {
-        var userId = Auth.userId();
-
-        var user = userRepository.findById(userId);
-
-        var orders = switch (user.get().getRole()) {
-            case Huckster -> orderRepository.findOrderByStatus(StatusIds.New);
-            case Stalker, Courier -> orderRepository.findSuggestedOrders(userId);
-            default -> new ArrayList<IOrderResult>();
-        };
-        var response = Streams.from(orders)
-                .map(OrderResponse::new).toList();
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return false;
     }
 
     @PostMapping("/deliver/{id}")

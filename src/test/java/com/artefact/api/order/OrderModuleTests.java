@@ -160,8 +160,70 @@ public class OrderModuleTests {
         assertTrue(Arrays.stream(hucksterNotifications.getBody()).anyMatch(n ->
                 n.getOrderId().equals(result.getBody().getOrder().getId())));
 
-
     }
+
+    @Test
+    void order_getById() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+
+        var request = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                request,
+                OrderResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var getResult = TestUtil.getAuthorized(restTemplate,
+                "/api/orders/" + result.getBody().getOrder().getId(),
+                client,
+                OrderResponse.class);
+
+        assertEquals(HttpStatus.OK, getResult.getStatusCode());
+        assertNotNull(getResult.getBody());
+        assertEquals(result.getBody().getOrder().getId(), getResult.getBody().getOrder().getId());
+    }
+
+    @Test
+    void order_getById_unauthorizedError() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+
+        var request = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                request,
+                OrderResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var getResult = restTemplate.getForEntity(
+                "/api/orders/" + result.getBody().getOrder().getId(),
+                ErrorResponse.class
+        );
+        assertUnauthorized(getResult);
+    }
+
+    @Test
+    void order_getById_notFoundError() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+
+        var request = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                request,
+                OrderResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var getResult = TestUtil.getAuthorized(restTemplate,
+                "/api/orders/" + 1231232,
+                client,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, getResult.getStatusCode());
+        assertEquals(ApiErrors.Order.NotFound, getResult.getBody());
+    }
+
 
     void orderTestHelper(Consumer<CreateOrderRequest> func) {
         var client = TestUtil.registerRole(restTemplate, Role.Client);

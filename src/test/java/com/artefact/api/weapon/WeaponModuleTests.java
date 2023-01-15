@@ -11,6 +11,7 @@ import com.artefact.api.request.UpdateWeaponRequest;
 import com.artefact.api.request.WeaponRequest;
 import com.artefact.api.response.ErrorResponse;
 import com.artefact.api.response.WeaponResponse;
+import com.artefact.api.response.WeaponResponse;
 import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.TestUtil;
 import org.junit.jupiter.api.AfterAll;
@@ -316,6 +317,75 @@ public class WeaponModuleTests {
         Assertions.assertEquals(HttpStatus.FORBIDDEN, deleteResult.getStatusCode());
         Assertions.assertEquals(ApiErrors.Weapon.CantDelete, deleteResult.getBody());
     }
+
+    @Test
+    void weapon_getById() {
+        var user = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
+
+        var createWeapon = getCreateWeapon();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon",
+                user,
+                createWeapon,
+                WeaponResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var getResult = TestUtil.getAuthorized(restTemplate,
+                "/api/weapon/" + result.getBody().getWeapon().getId().toString(),
+                user,
+                WeaponResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, getResult.getStatusCode());
+        Assertions.assertEquals(result.getBody().getWeapon().getId(), getResult.getBody().getWeapon().getId());
+    }
+
+    @Test
+    void weapon_getById_unauthorizedError() {
+        var user = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
+
+        var createWeapon = getCreateWeapon();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon",
+                user,
+                createWeapon,
+                WeaponResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var getResult = TestUtil.getAuthorized(restTemplate,
+                "/api/weapon/" + result.getBody().getWeapon().getId().toString(),
+                null,
+                ErrorResponse.class);
+
+        assertUnauthorized(getResult);
+    }
+
+    @Test
+    void weapon_getById_notFoundError() {
+        var user = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
+
+        var createWeapon = getCreateWeapon();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon",
+                user,
+                createWeapon,
+                WeaponResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var getResult = TestUtil.getAuthorized(restTemplate,
+                "/api/weapon/" + 13123123,
+                user,
+                ErrorResponse.class);
+
+        Assertions.assertEquals(HttpStatus.NOT_FOUND, getResult.getStatusCode());
+        Assertions.assertEquals(ApiErrors.Weapon.NotFound, getResult.getBody());
+    }
+
 
 
     @Test

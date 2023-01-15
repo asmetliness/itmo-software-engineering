@@ -257,6 +257,74 @@ public class InformationModuleTests {
         });
     }
 
+    @Test
+    void information_getById() {
+        var user = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                user,
+                createInformation,
+                InformationResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var getResult = TestUtil.getAuthorized(restTemplate,
+                "/api/information/" + result.getBody().getInformation().getId().toString(),
+                user,
+                InformationResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, getResult.getStatusCode());
+        Assertions.assertEquals(result.getBody().getInformation().getId(), getResult.getBody().getInformation().getId());
+    }
+
+    @Test
+    void information_getById_unauthorizedError() {
+        var user = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                user,
+                createInformation,
+                InformationResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var getResult = TestUtil.getAuthorized(restTemplate,
+                "/api/information/" + result.getBody().getInformation().getId().toString(),
+                null,
+                ErrorResponse.class);
+
+        assertUnauthorized(getResult);
+    }
+
+    @Test
+    void information_getById_notFoundError() {
+        var user = TestUtil.registerRole(restTemplate, Role.Informer);
+
+        var createInformation = getCreateInformation();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/information",
+                user,
+                createInformation,
+                InformationResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var getResult = TestUtil.getAuthorized(restTemplate,
+                "/api/information/" + 13123123,
+                user,
+                ErrorResponse.class);
+
+        Assertions.assertEquals(HttpStatus.NOT_FOUND, getResult.getStatusCode());
+        Assertions.assertEquals(ApiErrors.Information.NotFound, getResult.getBody());
+    }
+
 
     @Test
     void information_delete() {

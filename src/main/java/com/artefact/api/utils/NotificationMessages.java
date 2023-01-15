@@ -2,7 +2,7 @@ package com.artefact.api.utils;
 
 public class NotificationMessages {
 
-    public class Order {
+    public static class Order {
         public static final String Created = "Был создан заказ!";
         public static final String AcceptedByHuckster = "Заказ был принят барыгой!";
         public static final String AcceptedByStalker = "Заказ был принят сталкером!";

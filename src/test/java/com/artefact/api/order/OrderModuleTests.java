@@ -245,16 +245,11 @@ public class OrderModuleTests {
                 OrderResponse[].class
         );
         assertOK(ordersResult);
-
         assertTrue(Objects.requireNonNull(ordersResult.getBody()).length > 0);
         assertTrue(Arrays.stream(ordersResult.getBody()).anyMatch(o ->
                 o.getOrder().getId().equals(Objects.requireNonNull(result.getBody()).getOrder().getId())));
     }
 
-    @Test
-    void order_getAll_huckster() {
-        assertTrue(false);
-    }
     @Test
     void order_getAll_stalker() {
         assertTrue(false);
@@ -425,6 +420,37 @@ public class OrderModuleTests {
     }
 
     @Test
+    void order_getAll_huckster() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var getAllResult = TestUtil.getAuthorized(restTemplate,
+                "/api/orders",
+                huckster,
+                OrderResponse[].class);
+        assertOK(getAllResult);
+
+        assertTrue(Objects.requireNonNull(getAllResult.getBody()).length > 0);
+        assertTrue(Arrays.stream(getAllResult.getBody()).anyMatch(o ->
+                o.getOrder().getId().equals(Objects.requireNonNull(result.getBody()).getOrder().getId())));
+    }
+
+    @Test
     void order_accept_stalker() {
         assertTrue(false);
     }
@@ -477,7 +503,128 @@ public class OrderModuleTests {
         assertUnauthorized(acceptResult);
     }
 
+    @Test
+    void order_decline_huckster() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
 
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var declineResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/decline/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(declineResult);
+        assertEquals(result.getBody().getOrder().getId(), declineResult.getBody().getOrder().getId());
+        assertEquals(StatusIds.New, declineResult.getBody().getOrder().getStatusId());
+        assertNull(declineResult.getBody().getAcceptedUser());
+        assertNull(declineResult.getBody().getAssignedUser());
+        assertNull(declineResult.getBody().getSuggestedUser());
+
+    }
+
+    @Test
+    void order_decline_huckster_clientNotifications() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var declineResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/decline/" + result.getBody().getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(declineResult);
+
+        var clientNotifications = TestUtil.getAuthorized(restTemplate,
+                "/api/notifications",
+                client,
+                NotificationResponse[].class);
+
+        assertOK(clientNotifications);
+        assertTrue(Arrays.stream(clientNotifications.getBody()).anyMatch(n ->
+                n.getOrderId().equals(acceptResult.getBody().getOrder().getId())
+                        && n.getText().equals(NotificationMessages.Order.DeclinedByHuckster)
+        ));
+    }
+
+    @Test
+    void order_decline_stalker() {
+        assertTrue(false);
+    }
+    @Test
+    void order_decline_courier() {
+        assertTrue(false);
+    }
+
+    @Test
+    void order_decline_notFound() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var declineResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/decline/" + 13213123,
+                huckster,
+                ErrorResponse.class);
+        assertEquals(HttpStatus.NOT_FOUND, declineResult.getStatusCode());
+        assertEquals(ApiErrors.Order.NotFound, declineResult.getBody());
+    }
+
+    @Test
+    void order_decline_unauthorizedError() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var declineResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/decline/" + result.getBody().getOrder().getId(),
+                null,
+                ErrorResponse.class);
+
+        assertUnauthorized(declineResult);
+    }
 
     void orderTestHelper(Consumer<CreateOrderRequest> func) {
         var client = TestUtil.registerRole(restTemplate, Role.Client);

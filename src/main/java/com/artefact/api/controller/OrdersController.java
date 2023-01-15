@@ -205,6 +205,7 @@ public class OrdersController {
 
         var orderOpt = orderRepository.findById(id);
 
+        //TESTED
         if (orderOpt.isEmpty()) {
             return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
@@ -214,14 +215,17 @@ public class OrdersController {
             return new ResponseEntity<>(ApiErrors.Order.CantDecline, HttpStatus.FORBIDDEN);
         }
 
+        //TESTED
         if (role.equals(Role.Huckster)) {
             order.setAcceptedUserId(null);
             order.setStatusId(StatusIds.New);
 
+            //TESTED
             notificationRepository.save(new Notification(NotificationMessages.Order.DeclinedByHuckster,
                     order.getCreatedUserId(),
                     order.getId()));
         }
+
         if (role.equals(Role.Stalker)) {
             order.setAssignedUserId(null);
             order.setSuggestedUserId(null);

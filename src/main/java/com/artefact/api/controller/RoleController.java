@@ -12,8 +12,6 @@ import java.util.Arrays;
 @Controller
 @RequestMapping("/api/roles")
 public class RoleController {
-    public RoleController() {}
-
     @GetMapping
     public ResponseEntity<Iterable<Role>> getAllRoles() {
         var stream = Arrays.stream(Role.values());

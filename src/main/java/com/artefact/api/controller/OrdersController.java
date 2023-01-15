@@ -89,7 +89,7 @@ public class OrdersController {
 
         var orders = switch (role) {
             case Client -> orderRepository.findByCreatedUserId(userId); //TESTED
-            case Stalker -> orderRepository.findByAssignedUserId(userId);
+            case Stalker -> orderRepository.findByAssignedUserId(userId); //TESTED
             case Huckster -> orderRepository.findByAcceptedUserId(userId);
             default -> new ArrayList<IOrderResult>(); // TESTED
         };

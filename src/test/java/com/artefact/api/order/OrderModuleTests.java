@@ -254,11 +254,6 @@ public class OrderModuleTests {
     }
 
     @Test
-    void order_getAll_stalker() {
-        assertTrue(false);
-    }
-
-    @Test
     void order_getAll_default() {
         var client = TestUtil.registerRole(restTemplate, Role.Client);
         var informer = TestUtil.registerRole(restTemplate, Role.Informer);
@@ -319,10 +314,6 @@ public class OrderModuleTests {
                 o.getOrder().getId().equals(Objects.requireNonNull(result.getBody()).getOrder().getId())));
     }
 
-    @Test
-    void order_getAvailable_stalker() {
-        assertTrue(false);
-    }
 
     @Test
     void order_getAvailable_courier() {
@@ -453,10 +444,6 @@ public class OrderModuleTests {
                 o.getOrder().getId().equals(Objects.requireNonNull(result.getBody()).getOrder().getId())));
     }
 
-    @Test
-    void order_accept_stalker() {
-        assertTrue(false);
-    }
 
     @Test
     void order_accept_courier() {
@@ -577,10 +564,6 @@ public class OrderModuleTests {
         ));
     }
 
-    @Test
-    void order_decline_stalker() {
-        assertTrue(false);
-    }
     @Test
     void order_decline_courier() {
         assertTrue(false);
@@ -769,13 +752,46 @@ public class OrderModuleTests {
 
         assertEquals(HttpStatus.FORBIDDEN, suggestResultWrongUser.getStatusCode());
         assertEquals(ApiErrors.Order.CantSuggestToUser, suggestResultWrongUser.getBody());
+    }
 
+    @Test
+    void order_getAvailable_stalker() {
+        assertTrue(false);
+    }
 
+    @Test
+    void order_accept_stalker() {
+        assertTrue(false);
+    }
 
+    @Test
+    void order_decline_stalker() {
+        assertTrue(false);
+    }
+
+    @Test
+    void order_getAll_stalker() {
+        assertTrue(false);
     }
 
 
+    @Test
+    void order_start_stalker() {
+        assertTrue(false);
+    }
 
+    @Test
+    void order_complete_stalker() {
+        assertTrue(false);
+    }
+
+    //Suggest to courier
+    //Courier get available
+    //Courier accept
+    //Courier decline
+    //Courier get all
+    //Courier deliver
+    //Client complete
 
     void orderSuggestHelper(Consumer<SuggestOrderRequest> func) {
         var client = TestUtil.registerRole(restTemplate, Role.Client);

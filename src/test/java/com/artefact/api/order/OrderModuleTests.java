@@ -955,7 +955,7 @@ public class OrderModuleTests {
     }
 
     @Test
-    void order_complete_stalker() {
+    void order_complete_stalker_withNotifications() {
         var client = TestUtil.registerRole(restTemplate, Role.Client);
         var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
         var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
@@ -999,6 +999,11 @@ public class OrderModuleTests {
                 OrderResponse.class);
         assertOK(orderCompleteResult);
         assertEquals(StatusIds.TransferredToHuckster, Objects.requireNonNull(orderCompleteResult.getBody()).getOrder().getStatusId());
+
+        var clientNotifications = getNotifications(client);
+        assertTrue(Arrays.stream(clientNotifications.getBody()).anyMatch(n ->
+                n.getOrderId().equals(result.getBody().getOrder().getId()) &&
+                n.getText().equals(NotificationMessages.Order.CompletedByStalker)));
     }
 
     @Test
@@ -1045,29 +1050,430 @@ public class OrderModuleTests {
         assertEquals(ApiErrors.Order.CantComplete, orderStartResult.getBody());
     }
 
-    //Suggest to courier
-    //Courier get available
     @Test
-    void order_getAvailable_courier() {
-        assertTrue(false);
-    }
-    //Courier accept
-    @Test
-    void order_accept_courier() {
-        assertTrue(false);
+    void order_suggest_toCourier_withoutStalker_withNotifications() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var suggestToCourier= getSuggestRequest(courier.getUser(), result.getBody().getOrder());
+        var suggestToCourierResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestToCourier,
+                OrderResponse.class);
+        assertOK(suggestToCourierResult);
+        assertNotNull(Objects.requireNonNull(suggestToCourierResult.getBody()).getSuggestedUser());
+        assertEquals(courier.getUser().getId(), suggestToCourierResult.getBody().getSuggestedUser().getId());
+        assertEquals(StatusIds.AcceptedByHuckster, suggestToCourierResult.getBody().getOrder().getStatusId());
+        assertNull(suggestToCourierResult.getBody().getAssignedUser());
+        assertNull(suggestToCourierResult.getBody().getAcceptedCourier());
+
+        var courierNotifications = getNotifications(courier);
+        assertOK(courierNotifications);
+        assertTrue(Arrays.stream(Objects.requireNonNull(courierNotifications.getBody())).anyMatch(n ->
+                n.getOrderId().equals(result.getBody().getOrder().getId())
+                        && n.getText().equals(NotificationMessages.Order.Suggested)
+        ));
     }
 
-    //Courier decline
     @Test
-    void order_decline_courier() {
-        assertTrue(false);
+    void order_suggest_toCourier_withStalker_withNotifications() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+
+        assertOK(result);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+
+        var suggestRequest= getSuggestRequest(stalker.getUser(), result.getBody().getOrder());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                OrderResponse.class);
+        assertOK(suggestResult);
+
+        var stalkerAcceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                stalker,
+                OrderResponse.class);
+        assertOK(stalkerAcceptResult);
+
+        var orderStartResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/start/" + result.getBody().getOrder().getId(),
+                stalker,
+                OrderResponse.class);
+        assertOK(orderStartResult);
+
+        var orderCompleteResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/complete/" + result.getBody().getOrder().getId(),
+                stalker,
+                OrderResponse.class);
+        assertOK(orderCompleteResult);
+
+        var suggestToCourier= getSuggestRequest(courier.getUser(), result.getBody().getOrder());
+        var suggestToCourierResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestToCourier,
+                OrderResponse.class);
+        assertOK(suggestToCourierResult);
+        assertNotNull(Objects.requireNonNull(suggestToCourierResult.getBody()).getSuggestedUser());
+        assertEquals(courier.getUser().getId(), suggestToCourierResult.getBody().getSuggestedUser().getId());
+        assertEquals(StatusIds.TransferredToHuckster, suggestToCourierResult.getBody().getOrder().getStatusId());
+        assertNotNull(suggestToCourierResult.getBody().getAssignedUser());
+        assertNull(suggestToCourierResult.getBody().getAcceptedCourier());
+
+        var courierNotifications = getNotifications(courier);
+        assertOK(courierNotifications);
+        assertTrue(Arrays.stream(Objects.requireNonNull(courierNotifications.getBody())).anyMatch(n ->
+                n.getOrderId().equals(result.getBody().getOrder().getId())
+                        && n.getText().equals(NotificationMessages.Order.Suggested)
+        ));
+    }
+
+    @Test
+    void order_getAvailable_courier() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+        assertOK(result);
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+        var suggestRequest= getSuggestRequest(courier.getUser(), result.getBody().getOrder());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                OrderResponse.class);
+        assertOK(suggestResult);
+
+        var courierAvailable = TestUtil.getAuthorized(restTemplate,
+                "/api/orders/available",
+                courier,
+                OrderResponse[].class);
+        assertOK(courierAvailable);
+        assertTrue(Arrays.stream(courierAvailable.getBody()).anyMatch(o ->
+                o.getOrder().getId().equals(result.getBody().getOrder().getId())));
+
+    }
+    @Test
+    void order_accept_courier_withNotifications() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+        assertOK(result);
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+        var suggestRequest= getSuggestRequest(courier.getUser(), result.getBody().getOrder());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                OrderResponse.class);
+        assertOK(suggestResult);
+
+        var courierAcceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                courier,
+                OrderResponse.class);
+
+        assertOK(courierAcceptResult);
+        assertNull(courierAcceptResult.getBody().getSuggestedUser());
+        assertNotNull(courierAcceptResult.getBody().getAcceptedCourier());
+        assertEquals(courier.getUser().getId(), courierAcceptResult.getBody().getAcceptedCourier().getId());
+        assertEquals(StatusIds.Sent, courierAcceptResult.getBody().getOrderStatus().getId());
+
+
+        var hucksterNotifications = getNotifications(huckster);
+        assertTrue(Arrays.stream(hucksterNotifications.getBody()).anyMatch(n ->
+                n.getOrderId().equals(result.getBody().getOrder().getId()) &&
+                        n.getText().equals(NotificationMessages.Order.TransferredToCourier)));
+
+        var clientNotifications = getNotifications(client);
+        assertTrue(Arrays.stream(clientNotifications.getBody()).anyMatch(n ->
+                n.getOrderId().equals(result.getBody().getOrder().getId()) &&
+                n.getText().equals(NotificationMessages.Order.TransferredToCourier)));
+
+    }
+
+    @Test
+    void order_decline_courier_withNotifications() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+        assertOK(result);
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+        var suggestRequest= getSuggestRequest(courier.getUser(), result.getBody().getOrder());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                OrderResponse.class);
+        assertOK(suggestResult);
+
+        var courierDeclineResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/decline/" + result.getBody().getOrder().getId(),
+                courier,
+                OrderResponse.class);
+
+        assertOK(courierDeclineResult);
+        assertNull(courierDeclineResult.getBody().getSuggestedUser());
+        assertNull(courierDeclineResult.getBody().getAcceptedCourier());
+        assertEquals(StatusIds.TransferredToHuckster, courierDeclineResult.getBody().getOrderStatus().getId());
+
+        var hucksterNotifications = getNotifications(huckster);
+        assertTrue(Arrays.stream(hucksterNotifications.getBody()).anyMatch(n ->
+                n.getOrderId().equals(result.getBody().getOrder().getId()) &&
+                        n.getText().equals(NotificationMessages.Order.DeclinedByCourier)));
     }
     //Courier get all
+
+    @Test
+    void order_getAll_courier() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+        assertOK(result);
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+        var suggestRequest= getSuggestRequest(courier.getUser(), result.getBody().getOrder());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                OrderResponse.class);
+        assertOK(suggestResult);
+
+        var courierAcceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                courier,
+                OrderResponse.class);
+
+        assertOK(courierAcceptResult);
+
+        var courierOrders = TestUtil.getAuthorized(restTemplate,
+                "/api/orders",
+                courier,
+                OrderResponse[].class);
+
+        assertOK(courierOrders);
+        assertTrue(Arrays.stream(courierOrders.getBody()).anyMatch(o ->
+                o.getOrder().getId().equals(result.getBody().getOrder().getId())));
+    }
+
     //Courier deliver
+
+    @Test
+    void order_deliver_withNotifications() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+        assertOK(result);
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+        var suggestRequest= getSuggestRequest(courier.getUser(), result.getBody().getOrder());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                OrderResponse.class);
+        assertOK(suggestResult);
+
+        var courierAcceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                courier,
+                OrderResponse.class);
+
+        assertOK(courierAcceptResult);
+
+        var deliverResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/deliver/" + result.getBody().getOrder().getId(),
+                courier,
+                OrderResponse.class);
+        assertOK(deliverResult);
+        assertEquals(StatusIds.Delivered, deliverResult.getBody().getOrderStatus().getId());
+
+        var hucksterNotifications = getNotifications(huckster);
+        assertTrue(Arrays.stream(hucksterNotifications.getBody()).anyMatch(n ->
+                n.getOrderId().equals(result.getBody().getOrder().getId()) &&
+                        n.getText().equals(NotificationMessages.Order.WasDelivered)));
+
+        var clientNotifications = getNotifications(client);
+        assertTrue(Arrays.stream(clientNotifications.getBody()).anyMatch(n ->
+                n.getOrderId().equals(result.getBody().getOrder().getId()) &&
+                        n.getText().equals(NotificationMessages.Order.WasDelivered)));
+
+    }
+
+
+    @Test
+    void order_deliver_wrongRoleError() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/deliver/123213",
+                client,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.FORBIDDEN, result.getStatusCode());
+        assertEquals(ApiErrors.Order.CantDeliver, result.getBody());
+    }
+
+    @Test
+    void order_deliver_notFoundError() {
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/deliver/123213",
+                courier,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, result.getStatusCode());
+        assertEquals(ApiErrors.Order.NotFound, result.getBody());
+    }
+    @Test
+    void order_deliver_unauthorizedError() {
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/deliver/1232",
+                null,
+                ErrorResponse.class);
+
+        assertUnauthorized(result);
+    }
+
     //Client complete
     @Test
-    void order_complete_client() {
-        assertTrue(false);
+    void order_complete_client_withNotifications() {
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var huckster = TestUtil.registerRole(restTemplate, Role.Huckster);
+
+        var createRequest = getCreateRequest();
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/orders",
+                client,
+                createRequest,
+                OrderResponse.class);
+        assertOK(result);
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + Objects.requireNonNull(result.getBody()).getOrder().getId(),
+                huckster,
+                OrderResponse.class);
+        assertOK(acceptResult);
+        var suggestRequest= getSuggestRequest(courier.getUser(), result.getBody().getOrder());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/suggest",
+                huckster,
+                suggestRequest,
+                OrderResponse.class);
+        assertOK(suggestResult);
+
+        var courierAcceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/accept/" + result.getBody().getOrder().getId(),
+                courier,
+                OrderResponse.class);
+
+        assertOK(courierAcceptResult);
+
+        var deliverResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/deliver/" + result.getBody().getOrder().getId(),
+                courier,
+                OrderResponse.class);
+        assertOK(deliverResult);
+
+        var clientCompleteResult = TestUtil.postAuthorized(restTemplate,
+                "/api/orders/complete/" + result.getBody().getOrder().getId(),
+                client,
+                OrderResponse.class);
+        assertOK(clientCompleteResult);
+        assertEquals(StatusIds.Completed, clientCompleteResult.getBody().getOrderStatus().getId());
+
+        var hucksterNotifications = getNotifications(huckster);
+        assertTrue(Arrays.stream(hucksterNotifications.getBody()).anyMatch(n ->
+                n.getOrderId().equals(result.getBody().getOrder().getId()) &&
+                        n.getText().equals(NotificationMessages.Order.CompletedByClient)));
     }
 
     private ResponseEntity<NotificationResponse[]> getNotifications(AuthResponse user) {

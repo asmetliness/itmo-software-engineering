@@ -91,7 +91,7 @@ public class OrdersController {
             case Client -> orderRepository.findByCreatedUserId(userId); //TESTED
             case Stalker -> orderRepository.findByAssignedUserId(userId); // TESTED
             case Huckster -> orderRepository.findByAcceptedUserId(userId); //TESTED
-            case Courier -> orderRepository.findByAcceptedCourierId(userId);
+            case Courier -> orderRepository.findByAcceptedCourierId(userId); // TESTED
             default -> new ArrayList<IOrderResult>(); // TESTED
         };
 
@@ -165,6 +165,7 @@ public class OrdersController {
                     order.getId()));
         }
 
+        //TESTED
         if(role.equals(Role.Courier)) {
             order.setAcceptedCourierId(user.getId());
             order.setSuggestedUserId(null);
@@ -192,7 +193,8 @@ public class OrdersController {
                     && order.getSuggestedUserId().equals(user.getId());
         }
         if(user.getRole().equals(Role.Courier)) {
-            return order.getStatusId().equals(StatusIds.TransferredToHuckster)
+            return (order.getStatusId().equals(StatusIds.TransferredToHuckster) ||
+                    order.getStatusId().equals(StatusIds.AcceptedByHuckster))
                     && order.getSuggestedUserId().equals(user.getId());
         }
         return false;
@@ -268,6 +270,7 @@ public class OrdersController {
 
         if(user.getRole().equals(Role.Courier)) {
             return order.getStatusId().equals(StatusIds.TransferredToHuckster) ||
+                     order.getStatusId().equals(StatusIds.AcceptedByHuckster) ||
                     (order.getStatusId().equals(StatusIds.Sent) &&
                             order.getAcceptedCourierId().equals(user.getId()));
         }
@@ -350,21 +353,33 @@ public class OrdersController {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
 
+        //TESTED
         var orderOpt = orderRepository.findById(id);
         if(orderOpt.isEmpty()) {
             return new ResponseEntity<>(ApiErrors.Order.NotFound, HttpStatus.NOT_FOUND);
         }
         var order = orderOpt.get();
-
+        //TESTED
         if(!canCompleteOrder(user, order)) {
             return new ResponseEntity<>(ApiErrors.Order.CantComplete, HttpStatus.FORBIDDEN);
         }
 
+        //TESTED
         if(user.getRole().equals(Role.Stalker)) {
             order.setStatusId(StatusIds.TransferredToHuckster);
+
+            notificationRepository.save(new Notification(NotificationMessages.Order.CompletedByStalker,
+                    order.getCreatedUserId(),
+                    order.getId()));
         }
+
+        //TESTED
         if(user.getRole().equals(Role.Client)) {
             order.setStatusId(StatusIds.Completed);
+
+            notificationRepository.save(new Notification(NotificationMessages.Order.CompletedByClient,
+                    order.getAcceptedUserId(),
+                    order.getId()));
         }
         orderRepository.save(order);
 
@@ -404,6 +419,15 @@ public class OrdersController {
 
         order.setStatusId(StatusIds.Delivered);
         orderRepository.save(order);
+
+        notificationRepository.save(new Notification(NotificationMessages.Order.WasDelivered,
+                order.getCreatedUserId(),
+                order.getId()));
+
+        notificationRepository.save(new Notification(NotificationMessages.Order.WasDelivered,
+                order.getAcceptedUserId(),
+                order.getId()));
+
         return getOrderResponse(id);
     }
 }

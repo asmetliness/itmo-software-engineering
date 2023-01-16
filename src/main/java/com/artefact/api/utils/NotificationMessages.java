@@ -15,5 +15,11 @@ public class NotificationMessages {
         public static final String DeclinedByStalker = "Заказ был отклонен сталкером!";
         public static final String DeclinedByCourier = "Заказ был отклонен курьером!";
 
+        public static final String WasDelivered = "Заказ был доставлен!";
+
+        public static final String CompletedByStalker = "Сталкер выполнил заказ и передал барыге!";
+        public static final String CompletedByClient = "Клиент подтвердил завершение заказа!";
+
+
     }
 }

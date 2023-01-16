@@ -19,7 +19,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Date;
 
-@Controller
+@RestController
 @RequestMapping("/api/information")
 public class InformationController {
     final private InformationRepository infoRepository;

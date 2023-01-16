@@ -21,7 +21,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Optional;
 
-@Controller
+@RestController
 @RequestMapping("/api/orders")
 public class OrdersController {
 

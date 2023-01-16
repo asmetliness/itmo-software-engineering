@@ -21,7 +21,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-@Controller
+@RestController
 @RequestMapping("/api/users")
 public class UserController {
     private final UserRepository userRepository;

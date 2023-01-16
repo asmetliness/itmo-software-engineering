@@ -4,7 +4,10 @@ spring:
     url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact
     username: artifact
     password: artifact
-
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 debug: true
 

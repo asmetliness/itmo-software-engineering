@@ -43,6 +43,10 @@ public class ApiErrors {
     }
 
     public static class Weapon {
+        public static final ErrorResponse CantDeliver = new ErrorResponse("Вы не можете доставить данный заказ!");
+
+        public static final ErrorResponse CantAccept = new ErrorResponse("Вы не можете принять данный заказ!");
+
         public static final ErrorResponse CantDelete = new ErrorResponse("Вы не можете удалить это оружие!");
 
         public static final ErrorResponse CantCreate = new ErrorResponse("Выставлять оружие может только торговец оружием!");

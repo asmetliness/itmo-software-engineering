@@ -24,4 +24,6 @@ public class Artifact {
 
     @Column(name="average_days", nullable = false)
     private int averageDays;
+
+    public Artifact(){}
 }

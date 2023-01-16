@@ -3,6 +3,7 @@ package com.artefact.api.controller;
 
 import com.artefact.api.consts.Role;
 import com.artefact.api.consts.StatusIds;
+import com.artefact.api.model.User;
 import com.artefact.api.model.Weapon;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.repository.WeaponRepository;
@@ -186,22 +187,42 @@ public class WeaponController {
     @PostMapping("/confirm/{id}")
     public ResponseEntity<Object> confirmWeapon(@PathVariable long id) {
         var userId = Auth.userId();
+        var user = userRepository.findById(userId);
+
         var weaponOpt = weaponRepository.findById(id);
         if(weaponOpt.isEmpty()) {
             return new ResponseEntity<>(ApiErrors.Weapon.NotFound, HttpStatus.NOT_FOUND);
         }
         var weapon = weaponOpt.get();
-        if(!weapon.getCreatedUserId().equals(userId)) {
+
+        if(!canConfirm(user.get(), weapon)) {
             return new ResponseEntity<>(ApiErrors.Weapon.CantConfirm, HttpStatus.FORBIDDEN);
         }
+        if(user.get().getRole().equals(Role.WeaponDealer)) {
 
-        weapon.setAcquiredUserId(weapon.getRequestedUserId());
-        weapon.setRequestedUserId(null);
-        weapon.setStatusId(StatusIds.Acquired);
+            weapon.setAcquiredUserId(weapon.getRequestedUserId());
+            weapon.setRequestedUserId(null);
+            weapon.setStatusId(StatusIds.Acquired);
+        }
+        if(user.get().getRole().equals(Role.Stalker)) {
+            weapon.setStatusId(StatusIds.Completed);
+        }
 
         weaponRepository.save(weapon);
 
         return getWeaponById(id);
+    }
+
+    private Boolean canConfirm(User user, Weapon weapon) {
+        if(user.getRole().equals(Role.WeaponDealer)) {
+            return weapon.getCreatedUserId().equals(user.getId())
+                    && weapon.getStatusId().equals(StatusIds.Requested);
+        }
+        if(user.getRole().equals(Role.Stalker)) {
+            return weapon.getRequestedUserId().equals(user.getId())
+                    && weapon.getStatusId().equals(StatusIds.Delivered);
+        }
+        return false;
     }
 
     @PostMapping("/decline/{id}")
@@ -245,5 +266,63 @@ public class WeaponController {
 
         return getWeaponById(request.getWeaponId());
     }
+
+    @PostMapping("/courier/accept/{id}")
+    public ResponseEntity<Object> acceptCourier(@PathVariable("id") long id) {
+        var userId = Auth.userId();
+        var weaponOpt = weaponRepository.findById(id);
+        if(weaponOpt.isEmpty()) {
+            return new ResponseEntity<>(ApiErrors.Weapon.NotFound, HttpStatus.NOT_FOUND);
+        }
+        var weapon = weaponOpt.get();
+        if(!weapon.getSuggestedCourierId().equals(userId)) {
+            return new ResponseEntity<>(ApiErrors.Weapon.CantAccept, HttpStatus.FORBIDDEN);
+        }
+
+        weapon.setSuggestedCourierId(null);
+        weapon.setAcceptedCourierId(userId);
+        weapon.setStatusId(StatusIds.Sent);
+
+        weaponRepository.save(weapon);
+
+        return getWeaponById(id);
+    }
+
+    @PostMapping("/courier/decline/{id}")
+    public ResponseEntity<Object> declineCourier(@PathVariable("id") long id) {
+        var userId = Auth.userId();
+        var weaponOpt = weaponRepository.findById(id);
+        if(weaponOpt.isEmpty()) {
+            return new ResponseEntity<>(ApiErrors.Weapon.NotFound, HttpStatus.NOT_FOUND);
+        }
+        var weapon = weaponOpt.get();
+        if(!weapon.getSuggestedCourierId().equals(userId)) {
+            return new ResponseEntity<>(ApiErrors.Weapon.CantDecline, HttpStatus.FORBIDDEN);
+        }
+
+        weapon.setSuggestedCourierId(null);
+        weapon.setAcceptedCourierId(null);
+        weapon.setStatusId(StatusIds.Acquired);
+        weaponRepository.save(weapon);
+        return getWeaponById(id);
+    }
+
+    @PostMapping("/courier/deliver/{id}")
+    public ResponseEntity<Object> deliverCourier(@PathVariable("id") long id) {
+        var userId = Auth.userId();
+        var weaponOpt = weaponRepository.findById(id);
+        if(weaponOpt.isEmpty()) {
+            return new ResponseEntity<>(ApiErrors.Weapon.NotFound, HttpStatus.NOT_FOUND);
+        }
+        var weapon = weaponOpt.get();
+        if(!weapon.getAcceptedCourierId().equals(userId)) {
+            return new ResponseEntity<>(ApiErrors.Weapon.CantDeliver, HttpStatus.FORBIDDEN);
+        }
+        weapon.setStatusId(StatusIds.Delivered);
+        weaponRepository.save(weapon);
+
+        return getWeaponById(id);
+    }
+
 
 }

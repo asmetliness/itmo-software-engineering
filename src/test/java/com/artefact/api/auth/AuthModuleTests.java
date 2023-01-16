@@ -40,6 +40,14 @@ public class AuthModuleTests {
     }
 
     @Test
+    void register_getRoles() {
+        var result = restTemplate.getForEntity("/api/roles", Role[].class);
+
+        assertOK(result);
+        Assertions.assertEquals(6, result.getBody().length);
+    }
+
+    @Test
     public void register_success() {
         var request = createRegisterRequest();
 

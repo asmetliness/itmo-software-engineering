@@ -1,4 +1,4 @@
-package com.artefact.api.controller;
+package com.artefact.api.config;
 
 import java.util.ArrayList;
 import java.util.List;

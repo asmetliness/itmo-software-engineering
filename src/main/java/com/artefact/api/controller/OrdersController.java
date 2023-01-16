@@ -7,11 +7,17 @@ import com.artefact.api.repository.*;
 import com.artefact.api.repository.results.IOrderResult;
 import com.artefact.api.request.CreateOrderRequest;
 import com.artefact.api.request.SuggestOrderRequest;
+import com.artefact.api.response.NotificationResponse;
 import com.artefact.api.response.OrderResponse;
 import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.NotificationMessages;
 import com.artefact.api.utils.Streams;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -44,6 +50,7 @@ public class OrdersController {
 
 
     @PostMapping
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = OrderResponse.class))} ) })
     public ResponseEntity<Object> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
@@ -71,6 +78,7 @@ public class OrdersController {
     }
 
     @GetMapping("/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = OrderResponse.class))} ) })
     public ResponseEntity<Object> getOrderResponse(@PathVariable("id") Long id) {
 
         var order = orderRepository.findByOrderId(id);
@@ -82,6 +90,7 @@ public class OrdersController {
     }
 
     @GetMapping
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = OrderResponse.class)))} ) })
     public ResponseEntity<Iterable<OrderResponse>> getOrderList() {
         var userId = Auth.userId();
 
@@ -103,6 +112,7 @@ public class OrdersController {
     }
 
     @GetMapping("/available")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = OrderResponse.class)))} ) })
     public ResponseEntity<Iterable<OrderResponse>> getAvailableOrders() {
         var userId = Auth.userId();
 
@@ -121,6 +131,7 @@ public class OrdersController {
     }
 
     @PostMapping("/accept/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = OrderResponse.class))} ) })
     public ResponseEntity<Object> acceptOrder(@PathVariable("id") long id) {
         var userId = Auth.userId();
 
@@ -202,6 +213,7 @@ public class OrdersController {
     }
 
     @PostMapping("/decline/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = OrderResponse.class))} ) })
     public ResponseEntity<Object> declineOrder(@PathVariable("id") long id) {
         var userId = Auth.userId();
 
@@ -279,6 +291,7 @@ public class OrdersController {
     }
 
     @PostMapping("/suggest")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = OrderResponse.class))} ) })
     public ResponseEntity<Object> suggestOrder(@Valid  @RequestBody SuggestOrderRequest request) {
 
         var userId = Auth.userId();
@@ -324,6 +337,7 @@ public class OrdersController {
     }
 
     @PostMapping("/start/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = OrderResponse.class))} ) })
     public ResponseEntity<Object> startProgress(@PathVariable("id") long id) {
 
         var userId = Auth.userId();
@@ -349,6 +363,7 @@ public class OrdersController {
     }
 
     @PostMapping("/complete/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = OrderResponse.class))} ) })
     public ResponseEntity<Object> completeOrder(@PathVariable("id") long id) {
 
         var userId = Auth.userId();
@@ -402,6 +417,7 @@ public class OrdersController {
     }
 
     @PostMapping("/deliver/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = OrderResponse.class))} ) })
     public ResponseEntity<Object> deliverOrder(@PathVariable long id) {
         var userId = Auth.userId();
 

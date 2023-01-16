@@ -2,6 +2,12 @@ package com.artefact.api.controller;
 
 import com.artefact.api.model.Artifact;
 import com.artefact.api.repository.ArtifactRepository;
+import com.artefact.api.response.WeaponResponse;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -19,6 +25,7 @@ public class ArtifactController {
     }
 
     @GetMapping("")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = Artifact.class)))} ) })
     public ResponseEntity<Iterable<Artifact>> getArtifacts() {
         return new ResponseEntity<>(artifactRepository.findAll(), HttpStatus.OK);
     }

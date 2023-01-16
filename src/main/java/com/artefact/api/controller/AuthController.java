@@ -1,5 +1,6 @@
 package com.artefact.api.controller;
 
+import com.artefact.api.model.Artifact;
 import com.artefact.api.model.User;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.LoginRequest;
@@ -7,6 +8,10 @@ import com.artefact.api.request.RegisterRequest;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.security.JwtUtil;
 import com.artefact.api.utils.ApiErrors;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +38,7 @@ public class AuthController {
 
 
     @PostMapping("/register")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = AuthResponse.class))} ) })
     public ResponseEntity<Object> register(@Valid @RequestBody RegisterRequest request) {
 
         var existingUser = userRepository.findByEmail(request.getEmail());
@@ -57,6 +63,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = AuthResponse.class))} ) })
     public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request) {
         Optional<User> user = userRepository.findByEmail(request.getEmail());
         if (user.isEmpty()) {

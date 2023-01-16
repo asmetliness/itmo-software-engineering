@@ -4,10 +4,16 @@ import com.artefact.api.consts.Role;
 import com.artefact.api.model.User;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.UpdateUserRequest;
+import com.artefact.api.response.OrderResponse;
 import com.artefact.api.response.UserResponse;
 import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.FileNameGenerator;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -32,6 +38,7 @@ public class UserController {
     }
 
     @GetMapping("/current")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = UserResponse.class))} ) })
     public ResponseEntity<Object> getUserDetails() {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
@@ -40,6 +47,7 @@ public class UserController {
 
 
     @PutMapping("/current")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = UserResponse.class))} ) })
     public ResponseEntity<UserResponse> updateUserDetails(@RequestBody UpdateUserRequest request) {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
@@ -55,11 +63,13 @@ public class UserController {
     }
 
     @GetMapping("/stalkers")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = User.class)))} ) })
     public ResponseEntity<Iterable<User>> getAllStalkers() {
         return getUsersByRole(Role.Stalker, new Role[]{Role.Huckster});
     }
 
     @GetMapping("/couriers")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = User.class)))} ) })
     public ResponseEntity<Iterable<User>> getAllCouriers() {
         return getUsersByRole(Role.Courier, new Role[]{Role.Huckster, Role.WeaponDealer});
     }
@@ -79,6 +89,7 @@ public class UserController {
 
     // TODO: Проверить
     @PostMapping("/image/upload")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = UserResponse.class))} ) })
     public ResponseEntity<Object> uploadUserImage(@RequestParam("image") MultipartFile image) {
         var userId = Auth.userId();
 
@@ -116,6 +127,7 @@ public class UserController {
     }
 
     @DeleteMapping("/image/delete")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = UserResponse.class))} ) })
     public ResponseEntity<Object> removeUserImage() {
         var userId = Auth.userId();
 

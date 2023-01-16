@@ -1,9 +1,15 @@
 package com.artefact.api.controller;
 
 import com.artefact.api.repository.NotificationRepository;
+import com.artefact.api.response.InformationResponse;
 import com.artefact.api.response.NotificationResponse;
 import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.Streams;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -21,6 +27,7 @@ public class NotificationController {
     }
 
     @GetMapping("")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = NotificationResponse.class)))} ) })
     public ResponseEntity<Iterable<NotificationResponse>> getNotifications() {
         var userId = Auth.userId();
 

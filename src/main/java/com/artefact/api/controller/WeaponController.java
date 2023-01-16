@@ -16,6 +16,11 @@ import com.artefact.api.response.WeaponResponse;
 import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.Streams;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -39,6 +44,7 @@ public class WeaponController {
 
 
     @PostMapping
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> createWeapon(@Valid @RequestBody CreateWeaponRequest request) {
         var userId = Auth.userId();
 
@@ -61,6 +67,7 @@ public class WeaponController {
     }
 
     @PutMapping
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> updateWeapon(@Valid @RequestBody UpdateWeaponRequest request) {
         var userId = Auth.userId();
 
@@ -82,6 +89,7 @@ public class WeaponController {
     }
 
     @DeleteMapping("/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = WeaponResponse.class)))} ) })
     public ResponseEntity<Object> deleteWeapon(@PathVariable long id) {
         var userId = Auth.userId();
 
@@ -100,6 +108,7 @@ public class WeaponController {
 
 
     @GetMapping
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = WeaponResponse.class)))} ) })
     public ResponseEntity<Object> getWeapons() {
         var userId = Auth.userId();
 
@@ -115,6 +124,7 @@ public class WeaponController {
     }
 
     @GetMapping("/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> getWeaponById(@PathVariable long id) {
 
         var weaponOpt = weaponRepository.findByWeaponId(id);
@@ -126,6 +136,7 @@ public class WeaponController {
     }
 
     @GetMapping("/available")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = WeaponResponse.class)))} ) })
     public ResponseEntity<Object> getAvailableWeapons() {
 
         var userId = Auth.userId();
@@ -141,6 +152,7 @@ public class WeaponController {
     }
 
     @GetMapping("/requested")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = WeaponResponse.class)))} ) })
     public ResponseEntity<Object> getRequestedWeapons() {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
@@ -162,6 +174,7 @@ public class WeaponController {
 
     //TODO: add notifications for request, confirm, decline
     @PostMapping("/request/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> requestWeapon(@PathVariable long id, @Valid @RequestBody WeaponRequest request) {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
@@ -185,6 +198,7 @@ public class WeaponController {
     }
 
     @PostMapping("/confirm/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> confirmWeapon(@PathVariable long id) {
         var userId = Auth.userId();
         var user = userRepository.findById(userId);
@@ -226,6 +240,7 @@ public class WeaponController {
     }
 
     @PostMapping("/decline/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> declineWeapon(@PathVariable long id) {
         var userId = Auth.userId();
         var weaponOpt = weaponRepository.findById(id);
@@ -245,6 +260,7 @@ public class WeaponController {
 
 
     @PostMapping("/suggest")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> suggestCourier(@Valid @RequestBody SuggestWeaponRequest request) {
         var userId = Auth.userId();
         var weaponOpt = weaponRepository.findById(request.getWeaponId());
@@ -268,6 +284,7 @@ public class WeaponController {
     }
 
     @PostMapping("/courier/accept/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> acceptCourier(@PathVariable("id") long id) {
         var userId = Auth.userId();
         var weaponOpt = weaponRepository.findById(id);
@@ -289,6 +306,7 @@ public class WeaponController {
     }
 
     @PostMapping("/courier/decline/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> declineCourier(@PathVariable("id") long id) {
         var userId = Auth.userId();
         var weaponOpt = weaponRepository.findById(id);
@@ -308,6 +326,7 @@ public class WeaponController {
     }
 
     @PostMapping("/courier/deliver/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> deliverCourier(@PathVariable("id") long id) {
         var userId = Auth.userId();
         var weaponOpt = weaponRepository.findById(id);

@@ -2,14 +2,21 @@ package com.artefact.api.controller;
 
 import com.artefact.api.consts.Role;
 import com.artefact.api.consts.StatusIds;
+import com.artefact.api.model.Artifact;
 import com.artefact.api.model.Information;
 import com.artefact.api.repository.*;
 import com.artefact.api.repository.results.IInformationResult;
 import com.artefact.api.request.CreateInformationRequest;
 import com.artefact.api.request.UpdateInformationRequest;
+import com.artefact.api.response.AuthResponse;
 import com.artefact.api.response.InformationResponse;
 import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.Auth;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -34,6 +41,7 @@ public class InformationController {
     }
 
     @PostMapping
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = InformationResponse.class))} ) })
     public ResponseEntity<Object> createInformation(@Valid @RequestBody CreateInformationRequest request) {
         var userId = Auth.userId();
 
@@ -56,6 +64,7 @@ public class InformationController {
     }
 
     @PutMapping
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = InformationResponse.class))} ) })
     public ResponseEntity<Object> updateInformation(@Valid @RequestBody UpdateInformationRequest request) {
         var userId = Auth.userId();
         var information = infoRepository.findById(request.getId());
@@ -78,6 +87,7 @@ public class InformationController {
     }
 
     @DeleteMapping("/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = InformationResponse.class)))} ) })
     public ResponseEntity<Object> deleteInformation(@PathVariable long id) {
         var userId = Auth.userId();
         var information = infoRepository.findById(id);
@@ -96,6 +106,7 @@ public class InformationController {
     }
 
     @GetMapping
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = InformationResponse.class)))} ) })
     public ResponseEntity<Object> getInformationList() {
         var userId = Auth.userId();
 
@@ -111,6 +122,7 @@ public class InformationController {
     }
 
     @GetMapping("/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = InformationResponse.class))} ) })
     public ResponseEntity<Object> getInformation(@PathVariable Long id) {
         var userId = Auth.userId();
 
@@ -131,6 +143,7 @@ public class InformationController {
     }
 
     @GetMapping("/available")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = InformationResponse.class)))} ) })
     public ResponseEntity<Object> getAvailableList() {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
@@ -144,6 +157,7 @@ public class InformationController {
 
 
     @GetMapping("/requested")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = InformationResponse.class)))} ) })
     public ResponseEntity<Object> getRequestedInformation() {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
@@ -158,6 +172,7 @@ public class InformationController {
     }
 
     @PostMapping("/request/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = InformationResponse.class))} ) })
     public ResponseEntity<Object> requestInformation(@PathVariable long id) {
         var userId = Auth.userId();
         var user = userRepository.findById(userId).get();
@@ -180,6 +195,7 @@ public class InformationController {
     }
 
     @PostMapping("/confirm/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = InformationResponse.class))} ) })
     public ResponseEntity<Object> confirmInformation(@PathVariable long id) {
         var userId = Auth.userId();
         var informationOpt = infoRepository.findById(id);
@@ -201,6 +217,7 @@ public class InformationController {
     }
 
     @PostMapping("/decline/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = InformationResponse.class))} ) })
     public ResponseEntity<Object> declineInformation(@PathVariable long id) {
         var userId = Auth.userId();
         var informationOpt = infoRepository.findById(id);

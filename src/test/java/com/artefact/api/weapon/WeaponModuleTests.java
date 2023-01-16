@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 
 import static com.artefact.api.utils.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SpringBootTest(classes = ApiApplication.class,webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -72,8 +73,8 @@ public class WeaponModuleTests {
         assertEquals(createWeapon.getDescription(), result.getBody().getWeapon().getDescription());
         assertEquals(createWeapon.getPrice(), result.getBody().getWeapon().getPrice());
         assertEquals(user.getUser().getId(), result.getBody().getCreatedUser().getId());
-        Assertions.assertNull(result.getBody().getAcquiredUser());
-        Assertions.assertNull(result.getBody().getRequestedUser());
+        assertNull(result.getBody().getAcquiredUser());
+        assertNull(result.getBody().getRequestedUser());
         assertEquals(StatusIds.New, result.getBody().getStatus().getId());
     }
 
@@ -147,8 +148,8 @@ public class WeaponModuleTests {
         assertEquals(updateRequest.getDescription(), updateResult.getBody().getWeapon().getDescription());
         assertEquals(updateRequest.getPrice(),updateResult.getBody().getWeapon().getPrice());
         assertEquals(user.getUser().getId(), updateResult.getBody().getCreatedUser().getId());
-        Assertions.assertNull(updateResult.getBody().getAcquiredUser());
-        Assertions.assertNull(updateResult.getBody().getRequestedUser());
+        assertNull(updateResult.getBody().getAcquiredUser());
+        assertNull(updateResult.getBody().getRequestedUser());
         assertEquals(StatusIds.New, updateResult.getBody().getStatus().getId());
 
     }
@@ -466,7 +467,7 @@ public class WeaponModuleTests {
         assertEquals(StatusIds.Requested, requestResult.getBody().getWeapon().getStatusId());
         Assertions.assertNotNull(requestResult.getBody().getRequestedUser());
         assertEquals(stalker.getUser().getId(), requestResult.getBody().getRequestedUser().getId());
-        Assertions.assertNull(requestResult.getBody().getAcquiredUser());
+        assertNull(requestResult.getBody().getAcquiredUser());
 
         var getRequestedResult = TestUtil.getAuthorized(restTemplate,
                 "/api/weapon/requested",
@@ -577,7 +578,7 @@ public class WeaponModuleTests {
         assertEquals(HttpStatus.OK, confirmResult.getStatusCode());
         assertEquals(StatusIds.Acquired, confirmResult.getBody().getWeapon().getStatusId());
         assertEquals(stalker.getUser().getId(), confirmResult.getBody().getAcquiredUser().getId());
-        Assertions.assertNull(confirmResult.getBody().getRequestedUser());
+        assertNull(confirmResult.getBody().getRequestedUser());
 
         var stalkerGetAcquired = TestUtil.getAuthorized(restTemplate,
                 "/api/weapon",
@@ -644,8 +645,8 @@ public class WeaponModuleTests {
                 WeaponResponse.class);
         assertEquals(HttpStatus.OK, declineResult.getStatusCode());
         assertEquals(StatusIds.New, declineResult.getBody().getWeapon().getStatusId());
-        Assertions.assertNull(declineResult.getBody().getRequestedUser());
-        Assertions.assertNull(declineResult.getBody().getAcquiredUser());
+        assertNull(declineResult.getBody().getRequestedUser());
+        assertNull(declineResult.getBody().getAcquiredUser());
 
         var stalkerGetAvailable = TestUtil.getAuthorized(restTemplate,
                 "/api/weapon/available",
@@ -793,6 +794,288 @@ public class WeaponModuleTests {
         assertEquals(ApiErrors.Weapon.CantSuggestToUser, suggestResult.getBody());
     }
 
+    @Test
+    void weapon_courier_accept() {
+        var weaponDealer = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+
+        var createWeapon = getCreateWeapon();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon",
+                weaponDealer,
+                createWeapon,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var weaponRequest = new WeaponRequest("spb");
+        var requestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/request/" + result.getBody().getWeapon().getId(),
+                stalker,
+                weaponRequest,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, requestResult.getStatusCode());
+
+        var confirmResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/confirm/" + result.getBody().getWeapon().getId(),
+                weaponDealer,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, confirmResult.getStatusCode());
+
+        var suggestRequest = getSuggestRequest(courier, result.getBody());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/suggest",
+                weaponDealer,
+                suggestRequest,
+                WeaponResponse.class);
+        assertOK(suggestResult);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/accept/" + result.getBody().getWeapon().getId(),
+                courier,
+                WeaponResponse.class);
+        assertOK(acceptResult);
+        assertNull(acceptResult.getBody().getSuggestedCourier());
+        assertEquals(courier.getUser().getId(), acceptResult.getBody().getAcceptedCourier().getId());
+        assertEquals(StatusIds.Sent, acceptResult.getBody().getStatus().getId());
+    }
+
+    @Test
+    void weapon_courier_accept_unauthorizedError() {
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/accept/123",
+                null,
+                ErrorResponse.class);
+        assertUnauthorized(result);
+    }
+
+    @Test
+    void weapon_courier_accept_notFoundError() {
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/accept/12312",
+                courier,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, result.getStatusCode());
+        assertEquals(ApiErrors.Weapon.NotFound, result.getBody());
+    }
+
+    @Test
+    void weapon_courier_decline() {
+        var weaponDealer = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+
+        var createWeapon = getCreateWeapon();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon",
+                weaponDealer,
+                createWeapon,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var weaponRequest = new WeaponRequest("spb");
+        var requestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/request/" + result.getBody().getWeapon().getId(),
+                stalker,
+                weaponRequest,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, requestResult.getStatusCode());
+
+        var confirmResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/confirm/" + result.getBody().getWeapon().getId(),
+                weaponDealer,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, confirmResult.getStatusCode());
+
+        var suggestRequest = getSuggestRequest(courier, result.getBody());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/suggest",
+                weaponDealer,
+                suggestRequest,
+                WeaponResponse.class);
+        assertOK(suggestResult);
+
+        var declineResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/decline/" + result.getBody().getWeapon().getId(),
+                courier,
+                WeaponResponse.class);
+        assertOK(declineResult);
+        assertNull(declineResult.getBody().getSuggestedCourier());
+        assertNull(declineResult.getBody().getAcceptedCourier());
+        assertEquals(StatusIds.Acquired, declineResult.getBody().getStatus().getId());
+    }
+
+    @Test
+    void weapon_courier_decline_unauthorizedError() {
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/decline/123",
+                null,
+                ErrorResponse.class);
+        assertUnauthorized(result);
+    }
+
+    @Test
+    void weapon_courier_decline_notFoundError() {
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/decline/12312",
+                courier,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, result.getStatusCode());
+        assertEquals(ApiErrors.Weapon.NotFound, result.getBody());
+    }
+
+
+
+    @Test
+    void weapon_courier_deliver() {
+        var weaponDealer = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+
+        var createWeapon = getCreateWeapon();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon",
+                weaponDealer,
+                createWeapon,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var weaponRequest = new WeaponRequest("spb");
+        var requestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/request/" + result.getBody().getWeapon().getId(),
+                stalker,
+                weaponRequest,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, requestResult.getStatusCode());
+
+        var confirmResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/confirm/" + result.getBody().getWeapon().getId(),
+                weaponDealer,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, confirmResult.getStatusCode());
+
+        var suggestRequest = getSuggestRequest(courier, result.getBody());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/suggest",
+                weaponDealer,
+                suggestRequest,
+                WeaponResponse.class);
+        assertOK(suggestResult);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/accept/" + result.getBody().getWeapon().getId(),
+                courier,
+                WeaponResponse.class);
+        assertOK(acceptResult);
+
+        var deliverResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/deliver/" + result.getBody().getWeapon().getId(),
+                courier,
+                WeaponResponse.class);
+        assertOK(deliverResult);
+        assertEquals(StatusIds.Delivered, deliverResult.getBody().getStatus().getId());
+    }
+
+    @Test
+    void weapon_courier_deliver_unauthorizedError() {
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/deliver/123",
+                null,
+                ErrorResponse.class);
+        assertUnauthorized(result);
+    }
+
+    @Test
+    void weapon_courier_deliver_notFoundError() {
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/deliver/12312",
+                courier,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, result.getStatusCode());
+        assertEquals(ApiErrors.Weapon.NotFound, result.getBody());
+    }
+
+    //Stalker confirm
+
+    @Test
+    void weapon_confirm_stalker() {
+        var weaponDealer = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var courier = TestUtil.registerRole(restTemplate, Role.Courier);
+
+        var createWeapon = getCreateWeapon();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon",
+                weaponDealer,
+                createWeapon,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var weaponRequest = new WeaponRequest("spb");
+        var requestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/request/" + result.getBody().getWeapon().getId(),
+                stalker,
+                weaponRequest,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, requestResult.getStatusCode());
+
+        var confirmResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/confirm/" + result.getBody().getWeapon().getId(),
+                weaponDealer,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, confirmResult.getStatusCode());
+
+        var suggestRequest = getSuggestRequest(courier, result.getBody());
+        var suggestResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/suggest",
+                weaponDealer,
+                suggestRequest,
+                WeaponResponse.class);
+        assertOK(suggestResult);
+
+        var acceptResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/accept/" + result.getBody().getWeapon().getId(),
+                courier,
+                WeaponResponse.class);
+        assertOK(acceptResult);
+
+        var deliverResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/courier/deliver/" + result.getBody().getWeapon().getId(),
+                courier,
+                WeaponResponse.class);
+        assertOK(deliverResult);
+
+        var stalkerConfirmResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/confirm/" + result.getBody().getWeapon().getId(),
+                stalker,
+                WeaponResponse.class);
+
+        assertOK(stalkerConfirmResult);
+        assertEquals(StatusIds.Completed, stalkerConfirmResult.getBody().getStatus().getId());
+    }
+
+
+    @Test
+    void weapon_confirm_notFoundError() {
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/confirm/12312",
+                stalker,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, result.getStatusCode());
+        assertEquals(ApiErrors.Weapon.NotFound, result.getBody());
+    }
 
     private SuggestWeaponRequest getSuggestRequest(AuthResponse courier, WeaponResponse weaponResponse) {
 

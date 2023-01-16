@@ -219,7 +219,7 @@ public class WeaponController {
                     && weapon.getStatusId().equals(StatusIds.Requested);
         }
         if(user.getRole().equals(Role.Stalker)) {
-            return weapon.getRequestedUserId().equals(user.getId())
+            return weapon.getAcquiredUserId().equals(user.getId())
                     && weapon.getStatusId().equals(StatusIds.Delivered);
         }
         return false;

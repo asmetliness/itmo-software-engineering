@@ -25,7 +25,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Date;
 
-@Controller
+@RestController
 @RequestMapping("/api/weapon")
 public class WeaponController {
 

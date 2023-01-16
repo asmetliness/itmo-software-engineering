@@ -21,7 +21,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import java.io.IOException;
+
+import static com.artefact.api.utils.TestUtil.assertOK;
 import static com.artefact.api.utils.TestUtil.assertUnauthorized;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SpringBootTest(classes = ApiApplication.class,webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -50,7 +55,7 @@ public class UserModuleTests {
                 UserResponse.class);
 
         Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
-        Assertions.assertNotNull(result.getBody());
+        assertNotNull(result.getBody());
         Assertions.assertEquals(user.getUser().getId(), result.getBody().getUser().getId());
     }
 
@@ -79,7 +84,7 @@ public class UserModuleTests {
                 UserResponse.class);
 
         Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
-        Assertions.assertNotNull(result.getBody());
+        assertNotNull(result.getBody());
         Assertions.assertEquals(user.getUser().getId(), result.getBody().getUser().getId());
         Assertions.assertEquals(updateReq.getFirstName(), result.getBody().getUser().getFirstName());
         Assertions.assertEquals(updateReq.getLastName(), result.getBody().getUser().getLastName());
@@ -117,7 +122,7 @@ public class UserModuleTests {
                 User[].class);
 
         Assertions.assertEquals(HttpStatus.OK, hucksterResult.getStatusCode());
-        Assertions.assertNotNull(hucksterResult.getBody());
+        assertNotNull(hucksterResult.getBody());
         Assertions.assertEquals(2, hucksterResult.getBody().length);
 
         var notHucksterResult = TestUtil.getAuthorized(restTemplate,
@@ -126,7 +131,7 @@ public class UserModuleTests {
                 User[].class);
 
         Assertions.assertEquals(HttpStatus.OK, notHucksterResult.getStatusCode());
-        Assertions.assertNotNull(notHucksterResult.getBody());
+        assertNotNull(notHucksterResult.getBody());
         Assertions.assertEquals(0, notHucksterResult.getBody().length);
     }
 
@@ -152,7 +157,7 @@ public class UserModuleTests {
                 User[].class);
 
         Assertions.assertEquals(HttpStatus.OK, hucksterResult.getStatusCode());
-        Assertions.assertNotNull(hucksterResult.getBody());
+        assertNotNull(hucksterResult.getBody());
         Assertions.assertEquals(2, hucksterResult.getBody().length);
 
         var weaponDealerResult = TestUtil.getAuthorized(restTemplate,
@@ -161,7 +166,7 @@ public class UserModuleTests {
                 User[].class);
 
         Assertions.assertEquals(HttpStatus.OK, weaponDealerResult.getStatusCode());
-        Assertions.assertNotNull(weaponDealerResult.getBody());
+        assertNotNull(weaponDealerResult.getBody());
         Assertions.assertEquals(2, weaponDealerResult.getBody().length);
 
 
@@ -171,7 +176,7 @@ public class UserModuleTests {
                 User[].class);
 
         Assertions.assertEquals(HttpStatus.OK, clientResult.getStatusCode());
-        Assertions.assertNotNull(clientResult.getBody());
+        assertNotNull(clientResult.getBody());
         Assertions.assertEquals(0, clientResult.getBody().length);
     }
 
@@ -179,6 +184,56 @@ public class UserModuleTests {
     void users_getCouriers_unauthorizedError() {
         var result = restTemplate.getForEntity("/api/users/couriers", UserResponse.class);
         assertUnauthorized(result);
+    }
+
+
+    @Test
+    void user_uploadImage() throws IOException {
+        var user = TestUtil.registerRole(restTemplate, Role.Client);
+        var file = "image.png";
+
+        var result = TestUtil.postFile(restTemplate,
+                "/api/users/image/upload",
+                user,
+                file,
+                UserResponse.class);
+
+        assertOK(result);
+        assertNotNull(result.getBody().getUser().getImagePath());
+    }
+
+    @Test
+    void user_deleteImage_withoutFile() {
+        var user = TestUtil.registerRole(restTemplate, Role.Client);
+
+        var result = TestUtil.deleteAuthorized(restTemplate,
+                "/api/users/image/delete",
+                user,
+                UserResponse.class);
+        assertOK(result);
+    }
+
+    @Test
+    void user_deleteImage_withFile() throws IOException {
+        var user = TestUtil.registerRole(restTemplate, Role.Client);
+
+        var file = "image.png";
+
+        var result = TestUtil.postFile(restTemplate,
+                "/api/users/image/upload",
+                user,
+                file,
+                UserResponse.class);
+
+        assertOK(result);
+        assertNotNull(result.getBody().getUser().getImagePath());
+
+        var deleteResult = TestUtil.deleteAuthorized(restTemplate,
+                "/api/users/image/delete",
+                user,
+                UserResponse.class);
+        assertOK(deleteResult);
+        assertNull(deleteResult.getBody().getUser().getImagePath());
     }
 
 }

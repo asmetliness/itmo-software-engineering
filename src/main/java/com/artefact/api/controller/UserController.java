@@ -123,7 +123,7 @@ public class UserController {
 
         var imagePath = user.getImagePath();
         if (imagePath == null) {
-            return new ResponseEntity<>(ApiErrors.User.ImageIsEmpty, HttpStatus.BAD_REQUEST);
+            return getUserDetails();
         }
 
         var file = new File(UserController.RelativeImagesPath + imagePath);

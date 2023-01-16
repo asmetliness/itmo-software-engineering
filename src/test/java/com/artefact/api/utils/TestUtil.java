@@ -4,10 +4,21 @@ import com.artefact.api.consts.Role;
 import com.artefact.api.request.RegisterRequest;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.response.ErrorResponse;
+import org.apache.tomcat.util.http.fileupload.disk.DiskFileItem;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.ResourceUtils;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.UUID;
 
 public class TestUtil {
@@ -88,6 +99,41 @@ public class TestUtil {
         return restTemplate.exchange(url, HttpMethod.POST, entity, response);
     }
 
+    public static <TRequest, TResponse> ResponseEntity<TResponse> postFile(
+            TestRestTemplate restTemplate,
+            String url,
+            AuthResponse auth,
+            String fileName,
+            Class<TResponse> response) throws IOException {
+
+        var file =ResourceUtils.getFile("classpath:" + fileName);
+        var bytes = new FileInputStream(file).readAllBytes();
+
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        if(auth != null) {
+            headers.add("Authorization" , "Bearer " + auth.getToken());
+        }
+
+        HttpHeaders parts = new HttpHeaders();
+        parts.setContentType(MediaType.TEXT_PLAIN);
+        final ByteArrayResource byteArrayResource = new ByteArrayResource(bytes) {
+            @Override
+            public String getFilename() {
+                return fileName;
+            }
+        };
+
+        final HttpEntity<ByteArrayResource> partsEntity = new HttpEntity<>(byteArrayResource, parts);
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        MultiValueMap<String, Object> requestMap = new LinkedMultiValueMap<>();
+        requestMap.add("image", partsEntity);
+
+         return restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(requestMap, headers), response);
+
+    }
     public static <TRequest, TResponse> ResponseEntity<TResponse> putAuthorized(
             TestRestTemplate restTemplate,
             String url,
@@ -132,6 +178,7 @@ public class TestUtil {
 
         return restTemplate.exchange(url, HttpMethod.DELETE, entity, response);
     }
+
 
 
     public static <T> void assertOK(ResponseEntity<T> response) {

@@ -5,10 +5,13 @@ spring:
     username: artifact
     password: artifact
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   jpa:
     hibernate:
       ddl-auto: validate
-
 
 server:
   port: 8080

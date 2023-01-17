@@ -3,8 +3,10 @@ package com.artefact.api.controller;
 
 import com.artefact.api.consts.Role;
 import com.artefact.api.consts.StatusIds;
+import com.artefact.api.model.Notification;
 import com.artefact.api.model.User;
 import com.artefact.api.model.Weapon;
+import com.artefact.api.repository.NotificationRepository;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.repository.WeaponRepository;
 import com.artefact.api.repository.results.IWeaponResult;
@@ -15,6 +17,7 @@ import com.artefact.api.request.WeaponRequest;
 import com.artefact.api.response.WeaponResponse;
 import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.Auth;
+import com.artefact.api.utils.NotificationMessages;
 import com.artefact.api.utils.Streams;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,7 +26,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -37,9 +39,14 @@ public class WeaponController {
     final private WeaponRepository weaponRepository;
     final private UserRepository userRepository;
 
-    public WeaponController(WeaponRepository weaponRepository, UserRepository userRepository) {
+    final private NotificationRepository notificationRepository;
+
+    public WeaponController(WeaponRepository weaponRepository,
+                            UserRepository userRepository,
+                            NotificationRepository notificationRepository) {
         this.weaponRepository = weaponRepository;
         this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
     }
 
 
@@ -194,6 +201,10 @@ public class WeaponController {
         weapon.setStatusId(StatusIds.Acquired);
         weapon.setDeliveryAddress(request.getDeliveryAddress());
 
+        notificationRepository.save(new Notification(NotificationMessages.Weapon.Bought,
+                weapon.getCreatedUserId(),
+                weapon));
+
         weaponRepository.save(weapon);
         return getWeaponById(id);
     }
@@ -245,6 +256,11 @@ public class WeaponController {
         }
         if(user.get().getRole().equals(Role.Stalker)) {
             weapon.setStatusId(StatusIds.Completed);
+
+            notificationRepository.save(new Notification(NotificationMessages.Weapon.Confirmed,
+                    weapon.getCreatedUserId(),
+                    weapon));
+
         }
 
         weaponRepository.save(weapon);
@@ -305,6 +321,10 @@ public class WeaponController {
         weapon.setSuggestedCourierId(request.getUserId());
         weaponRepository.save(weapon);
 
+        notificationRepository.save(new Notification(NotificationMessages.Weapon.SuggestedToCourier,
+                weapon.getSuggestedCourierId(),
+                weapon));
+
         return getWeaponById(request.getWeaponId());
     }
 
@@ -324,6 +344,14 @@ public class WeaponController {
         weapon.setSuggestedCourierId(null);
         weapon.setAcceptedCourierId(userId);
         weapon.setStatusId(StatusIds.Sent);
+
+        notificationRepository.save(new Notification(NotificationMessages.Weapon.AcceptedByCourier,
+                weapon.getCreatedUserId(),
+                weapon));
+
+        notificationRepository.save(new Notification(NotificationMessages.Weapon.AcceptedByCourier,
+                weapon.getAcquiredUserId(),
+                weapon));
 
         weaponRepository.save(weapon);
 
@@ -346,6 +374,11 @@ public class WeaponController {
         weapon.setSuggestedCourierId(null);
         weapon.setAcceptedCourierId(null);
         weapon.setStatusId(StatusIds.Acquired);
+
+        notificationRepository.save(new Notification(NotificationMessages.Weapon.DeclinedByCourier,
+                weapon.getCreatedUserId(),
+                weapon));
+
         weaponRepository.save(weapon);
         return getWeaponById(id);
     }
@@ -363,6 +396,15 @@ public class WeaponController {
             return new ResponseEntity<>(ApiErrors.Weapon.CantDeliver, HttpStatus.FORBIDDEN);
         }
         weapon.setStatusId(StatusIds.Delivered);
+
+        notificationRepository.save(new Notification(NotificationMessages.Weapon.Delivered,
+                weapon.getCreatedUserId(),
+                weapon));
+
+        notificationRepository.save(new Notification(NotificationMessages.Weapon.Delivered,
+                weapon.getAcquiredUserId(),
+                weapon));
+
         weaponRepository.save(weapon);
 
         return getWeaponById(id);

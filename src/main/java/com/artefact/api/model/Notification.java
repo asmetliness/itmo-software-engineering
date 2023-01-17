@@ -18,6 +18,19 @@ public class Notification {
         this.setOrderId(orderId);
     }
 
+    public Notification(String message, Long userId, Information information) {
+        this.setMessage(message);
+        this.setUserId(userId);
+        this.setInformationOrderId(information.getId());
+    }
+
+    public Notification(String message, Long userId, Weapon weapon) {
+        this.setMessage(message);
+        this.setUserId(userId);
+        this.setWeaponOrderId(weapon.getId());
+    }
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

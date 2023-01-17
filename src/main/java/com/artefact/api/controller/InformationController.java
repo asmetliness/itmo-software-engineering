@@ -2,16 +2,16 @@ package com.artefact.api.controller;
 
 import com.artefact.api.consts.Role;
 import com.artefact.api.consts.StatusIds;
-import com.artefact.api.model.Artifact;
 import com.artefact.api.model.Information;
+import com.artefact.api.model.Notification;
 import com.artefact.api.repository.*;
 import com.artefact.api.repository.results.IInformationResult;
 import com.artefact.api.request.CreateInformationRequest;
 import com.artefact.api.request.UpdateInformationRequest;
-import com.artefact.api.response.AuthResponse;
 import com.artefact.api.response.InformationResponse;
 import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.Auth;
+import com.artefact.api.utils.NotificationMessages;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,7 +19,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -30,14 +29,16 @@ import java.util.Date;
 @RequestMapping("/api/information")
 public class InformationController {
     final private InformationRepository infoRepository;
-
     final private UserRepository userRepository;
 
+    final private NotificationRepository notificationRepository;
 
     public InformationController(InformationRepository infoRepository,
-                                 UserRepository userRepository) {
+                                 UserRepository userRepository,
+                                 NotificationRepository notificationRepository) {
         this.infoRepository = infoRepository;
         this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     @PostMapping
@@ -173,6 +174,10 @@ public class InformationController {
         var information = informationOpt.get();
         information.setAcquiredUserId(userId);
         information.setStatusId(StatusIds.Acquired);
+
+        notificationRepository.save(new Notification(NotificationMessages.Information.Bought,
+                information.getCreatedUserId(),
+                information));
 
         infoRepository.save(information);
         return getInformation(id);

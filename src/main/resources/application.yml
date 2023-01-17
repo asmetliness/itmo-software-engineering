@@ -1,23 +1,21 @@
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact
-    username: artifact
-    password: artifact
+    url: jdbc:postgresql://127.0.0.1:5432/studs
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+  flyway:
+    baseline-on-migrate: true
 
 debug: true
 
 server:
-  port: 8080
+  port: 9999
 
 flyway:
-  url: jdbc:postgresql://${POSTGRESQL_DB_HOST}:5432/artifact
-  user: artifact
-  password: artifact
+  url: jdbc:postgresql://127.0.0.1:5432/studs
   enabled: true
   locations:
     - 'classpath:db/migration'

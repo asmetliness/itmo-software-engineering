@@ -3,8 +3,7 @@ package com.artefact.api.security;
 
 import com.artefact.api.ApiApplication;
 import com.artefact.api.consts.Role;
-import com.artefact.api.repository.InformationRepository;
-import com.artefact.api.repository.UserRepository;
+import com.artefact.api.repository.*;
 import com.artefact.api.request.CreateInformationRequest;
 import com.artefact.api.request.UpdateInformationRequest;
 import com.artefact.api.response.ErrorResponse;
@@ -41,11 +40,18 @@ public class InformationModuleTests {
     private TestRestTemplate restTemplate;
 
     @AfterAll
-    static void cleanupData(@Autowired UserRepository userRepository, @Autowired InformationRepository informationRepository) {
+    static void cleanupData(
+            @Autowired NotificationRepository notificationRepository,
+            @Autowired UserRepository userRepository,
+            @Autowired InformationRepository informationRepository,
+            @Autowired WeaponRepository weaponRepository,
+            @Autowired OrderRepository orderRepository) {
+        notificationRepository.deleteAll();
+        orderRepository.deleteAll();
+        weaponRepository.deleteAll();
         informationRepository.deleteAll();
         userRepository.deleteAll();
     }
-
     @Test
     void information_create_unauthorizedError() {
         var createInformation = getCreateInformation();

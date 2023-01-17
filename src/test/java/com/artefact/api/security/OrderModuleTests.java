@@ -4,10 +4,7 @@ import com.artefact.api.ApiApplication;
 import com.artefact.api.consts.Role;
 import com.artefact.api.model.Order;
 import com.artefact.api.model.User;
-import com.artefact.api.repository.ArtifactRepository;
-import com.artefact.api.repository.NotificationRepository;
-import com.artefact.api.repository.OrderRepository;
-import com.artefact.api.repository.UserRepository;
+import com.artefact.api.repository.*;
 import com.artefact.api.request.CreateOrderRequest;
 import com.artefact.api.request.SuggestOrderRequest;
 import com.artefact.api.response.ErrorResponse;
@@ -44,9 +41,13 @@ public class OrderModuleTests {
     static void cleanupData(
             @Autowired NotificationRepository notificationRepository,
             @Autowired UserRepository userRepository,
+            @Autowired InformationRepository informationRepository,
+            @Autowired WeaponRepository weaponRepository,
             @Autowired OrderRepository orderRepository) {
         notificationRepository.deleteAll();
         orderRepository.deleteAll();
+        weaponRepository.deleteAll();
+        informationRepository.deleteAll();
         userRepository.deleteAll();
     }
 

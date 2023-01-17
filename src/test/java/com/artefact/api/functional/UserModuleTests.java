@@ -3,9 +3,9 @@ package com.artefact.api.functional;
 
 import com.artefact.api.ApiApplication;
 import com.artefact.api.consts.Role;
+import com.artefact.api.repository.*;
 import com.artefact.api.utils.TestUtil;
 import com.artefact.api.model.User;
-import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.UpdateUserRequest;
 import com.artefact.api.response.UserResponse;
 import org.junit.jupiter.api.AfterAll;
@@ -39,10 +39,18 @@ public class UserModuleTests {
     private TestRestTemplate restTemplate;
 
     @AfterAll
-    static void cleanupData(@Autowired UserRepository userRepository) {
+    static void cleanupData(
+            @Autowired NotificationRepository notificationRepository,
+            @Autowired UserRepository userRepository,
+            @Autowired InformationRepository informationRepository,
+            @Autowired WeaponRepository weaponRepository,
+            @Autowired OrderRepository orderRepository) {
+        notificationRepository.deleteAll();
+        orderRepository.deleteAll();
+        weaponRepository.deleteAll();
+        informationRepository.deleteAll();
         userRepository.deleteAll();
     }
-
     @Test
     void users_getCurrent() {
         var user = TestUtil.register(restTemplate);

@@ -23,6 +23,8 @@ public class ArtifactModuleTests {
     @Autowired
     private TestRestTemplate restTemplate;
 
+
+
     @Test
     void artifacts_getAll_unauthorizedError() {
 

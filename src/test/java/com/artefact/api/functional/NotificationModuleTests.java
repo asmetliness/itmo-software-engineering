@@ -3,8 +3,7 @@ package com.artefact.api.functional;
 
 import com.artefact.api.ApiApplication;
 import com.artefact.api.model.Notification;
-import com.artefact.api.repository.NotificationRepository;
-import com.artefact.api.repository.UserRepository;
+import com.artefact.api.repository.*;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.response.NotificationResponse;
 import org.junit.jupiter.api.AfterAll;
@@ -39,9 +38,15 @@ public class NotificationModuleTests {
 
     @AfterAll
     static void cleanupData(
+            @Autowired NotificationRepository notificationRepository,
             @Autowired UserRepository userRepository,
-            @Autowired NotificationRepository notificationRep) {
-        notificationRep.deleteAll();
+            @Autowired InformationRepository informationRepository,
+            @Autowired WeaponRepository weaponRepository,
+            @Autowired OrderRepository orderRepository) {
+        notificationRepository.deleteAll();
+        orderRepository.deleteAll();
+        weaponRepository.deleteAll();
+        informationRepository.deleteAll();
         userRepository.deleteAll();
     }
 

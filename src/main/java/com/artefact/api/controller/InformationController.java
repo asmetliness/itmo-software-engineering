@@ -156,6 +156,28 @@ public class InformationController {
     }
 
 
+    @PostMapping("/buy/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = InformationResponse.class))} ) })
+    public ResponseEntity<Object> buyInstant(@PathVariable long id) {
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        if(!user.getRole().equals(Role.Stalker)) {
+            return new ResponseEntity<>(ApiErrors.Information.UnauthorizedRole, HttpStatus.FORBIDDEN);
+        }
+        var informationOpt = infoRepository.findById(id);
+        if(informationOpt.isEmpty()) {
+            return new ResponseEntity<>(ApiErrors.Information.NotFound, HttpStatus.NOT_FOUND);
+        }
+
+        var information = informationOpt.get();
+        information.setAcquiredUserId(userId);
+        information.setStatusId(StatusIds.Acquired);
+
+        infoRepository.save(information);
+        return getInformation(id);
+    }
+
     @GetMapping("/requested")
     @ApiResponses(value = { @ApiResponse(content = { @Content(array = @ArraySchema( schema = @Schema(implementation = InformationResponse.class)))} ) })
     public ResponseEntity<Object> getRequestedInformation() {

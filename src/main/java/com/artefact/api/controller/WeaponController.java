@@ -173,6 +173,31 @@ public class WeaponController {
 
 
     //TODO: add notifications for request, confirm, decline
+
+    @PostMapping("/buy/{id}")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
+    public ResponseEntity<Object> buyInstant(@PathVariable long id, @Valid @RequestBody WeaponRequest request) {
+        var userId = Auth.userId();
+        var user = userRepository.findById(userId).get();
+
+        if(!user.getRole().equals(Role.Stalker)) {
+            return new ResponseEntity<>(ApiErrors.Weapon.CantBuy, HttpStatus.FORBIDDEN);
+        }
+
+        var weaponOpt = weaponRepository.findById(id);
+        if(weaponOpt.isEmpty()) {
+            return new ResponseEntity<>(ApiErrors.Weapon.NotFound, HttpStatus.NOT_FOUND);
+        }
+
+        var weapon = weaponOpt.get();
+        weapon.setAcquiredUserId(userId);
+        weapon.setStatusId(StatusIds.Acquired);
+        weapon.setDeliveryAddress(request.getDeliveryAddress());
+
+        weaponRepository.save(weapon);
+        return getWeaponById(id);
+    }
+
     @PostMapping("/request/{id}")
     @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = WeaponResponse.class))} ) })
     public ResponseEntity<Object> requestWeapon(@PathVariable long id, @Valid @RequestBody WeaponRequest request) {

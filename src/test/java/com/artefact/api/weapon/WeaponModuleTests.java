@@ -10,9 +10,7 @@ import com.artefact.api.request.CreateWeaponRequest;
 import com.artefact.api.request.SuggestWeaponRequest;
 import com.artefact.api.request.UpdateWeaponRequest;
 import com.artefact.api.request.WeaponRequest;
-import com.artefact.api.response.AuthResponse;
-import com.artefact.api.response.ErrorResponse;
-import com.artefact.api.response.WeaponResponse;
+import com.artefact.api.response.*;
 import com.artefact.api.response.WeaponResponse;
 import com.artefact.api.utils.ApiErrors;
 import com.artefact.api.utils.TestUtil;
@@ -532,6 +530,97 @@ public class WeaponModuleTests {
 
         assertUnauthorized(result);
     }
+
+    @Test
+    void weapon_buy() {
+        var weaponDealer = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+
+        var createWeapon = getCreateWeapon();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon",
+                weaponDealer,
+                createWeapon,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        var weaponRequest = new WeaponRequest("spb");
+
+        var buyResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/buy/" + result.getBody().getWeapon().getId(),
+                stalker,
+                weaponRequest,
+                WeaponResponse.class);
+
+        assertEquals(HttpStatus.OK, buyResult.getStatusCode());
+        assertEquals(StatusIds.Acquired, buyResult.getBody().getWeapon().getStatusId());
+        assertEquals(stalker.getUser().getId(), buyResult.getBody().getAcquiredUser().getId());
+        Assertions.assertNull(buyResult.getBody().getRequestedUser());
+
+        var stalkerGetAcquired = TestUtil.getAuthorized(restTemplate,
+                "/api/weapon",
+                stalker,
+                WeaponResponse[].class);
+        assertEquals(HttpStatus.OK, stalkerGetAcquired.getStatusCode());
+        Assertions.assertTrue(stalkerGetAcquired.getBody().length > 0);
+        Assertions.assertTrue(Arrays.stream(stalkerGetAcquired.getBody()).anyMatch(i ->
+                i.getWeapon().getId().equals(result.getBody().getWeapon().getId())));
+    }
+
+    @Test
+    void weapon_buy_unauthorizedError() {
+        var weaponRequest = new WeaponRequest("spb");
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/buy/123",
+                null,
+                weaponRequest,
+                ErrorResponse.class);
+        assertUnauthorized(result);
+    }
+
+    @Test
+    void weapon_buy_notFoundError() {
+        var weaponRequest = new WeaponRequest("spb");
+
+        var stalker = TestUtil.registerRole(restTemplate, Role.Stalker);
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/buy/123123",
+                stalker,
+                weaponRequest,
+                ErrorResponse.class);
+        assertEquals(HttpStatus.NOT_FOUND, result.getStatusCode());
+        assertEquals(ApiErrors.Weapon.NotFound, result.getBody());
+    }
+
+    @Test
+    void weapon_buy_wrongRoleError() {
+
+        var weaponDealer = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
+        var client = TestUtil.registerRole(restTemplate, Role.Client);
+
+        var createWeapon = getCreateWeapon();
+
+        var result = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon",
+                weaponDealer,
+                createWeapon,
+                WeaponResponse.class);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        var weaponRequest = new WeaponRequest("spb");
+
+        var buyResult = TestUtil.postAuthorized(restTemplate,
+                "/api/weapon/buy/" + result.getBody().getWeapon().getId(),
+                client,
+                weaponRequest,
+                ErrorResponse.class);
+
+        assertEquals(HttpStatus.FORBIDDEN, buyResult.getStatusCode());
+        assertEquals(ApiErrors.Weapon.CantBuy, buyResult.getBody());
+    }
+
 
     @Test
     void weapon_confirm_fullProcess_fullErrors() {

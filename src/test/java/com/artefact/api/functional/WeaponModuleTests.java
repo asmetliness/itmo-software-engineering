@@ -1,4 +1,4 @@
-package com.artefact.api.weapon;
+package com.artefact.api.functional;
 
 
 import com.artefact.api.ApiApplication;
@@ -76,18 +76,6 @@ public class WeaponModuleTests {
         assertEquals(StatusIds.New, result.getBody().getStatus().getId());
     }
 
-    @Test
-    void weapon_create_unauthorizedError() {
-        var createWeapon = getCreateWeapon();
-
-        var result = restTemplate.postForEntity(
-                "/api/weapon",
-                createWeapon,
-                WeaponResponse.class
-        );
-
-        assertUnauthorized(result);
-    }
 
     @Test
     void weapon_create_wrongRoleError() {
@@ -107,17 +95,6 @@ public class WeaponModuleTests {
 
 
 
-    @Test
-    void weapon_create_allFieldsValidation() {
-        createValidationHelper((weapon) -> {
-            weapon.setTitle(null);
-        });
-
-
-        createValidationHelper((weapon) -> {
-            weapon.setPrice(null);
-        });
-    }
     @Test
     void weapon_update() {
         var user = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
@@ -152,26 +129,6 @@ public class WeaponModuleTests {
 
     }
 
-    @Test
-    void weapon_update_unauthorizedError() {
-        var user = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
-
-        var createWeapon = getCreateWeapon();
-
-        var createResult = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon",
-                user,
-                createWeapon,
-                WeaponResponse.class);
-
-        assertEquals(HttpStatus.OK, createResult.getStatusCode());
-
-        var updateRequest = getUpdateWeapon(createResult.getBody().getWeapon().getId());
-
-        var result = restTemplate.exchange("/api/weapon", HttpMethod.PUT, new HttpEntity<>(updateRequest), WeaponResponse.class);
-
-        assertUnauthorized(result);
-    }
 
     @Test
     void weapon_update_cantUpdateOthersWeapon() {
@@ -220,22 +177,6 @@ public class WeaponModuleTests {
 
 
     @Test
-    void weapon_update_allFieldsValidation() {
-        updateValidationHelper((weapon) -> {
-            weapon.setId(null);
-        });
-
-        updateValidationHelper((weapon) -> {
-            weapon.setTitle(null);
-        });
-
-        updateValidationHelper((weapon) -> {
-            weapon.setPrice(null);
-        });
-    }
-
-
-    @Test
     void weapon_delete() {
         var user = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
 
@@ -272,28 +213,6 @@ public class WeaponModuleTests {
         assertEquals(HttpStatus.NOT_FOUND, getAfterDelete.getStatusCode());
         assertEquals(ApiErrors.Weapon.NotFound, getAfterDelete.getBody());
 
-    }
-
-    @Test
-    void weapon_delete_unauthorizedError() {
-        var user = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
-
-        var createWeapon = getCreateWeapon();
-
-        var result = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon",
-                user,
-                createWeapon,
-                WeaponResponse.class);
-
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-
-        var deleteResult = restTemplate.getForEntity(
-                "/api/weapon/" + result.getBody().getWeapon().getId().toString(),
-                ErrorResponse.class
-        );
-
-        assertUnauthorized(deleteResult);
     }
 
     @Test
@@ -341,28 +260,6 @@ public class WeaponModuleTests {
 
         assertEquals(HttpStatus.OK, getResult.getStatusCode());
         assertEquals(result.getBody().getWeapon().getId(), getResult.getBody().getWeapon().getId());
-    }
-
-    @Test
-    void weapon_getById_unauthorizedError() {
-        var user = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
-
-        var createWeapon = getCreateWeapon();
-
-        var result = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon",
-                user,
-                createWeapon,
-                WeaponResponse.class);
-
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-
-        var getResult = TestUtil.getAuthorized(restTemplate,
-                "/api/weapon/" + result.getBody().getWeapon().getId().toString(),
-                null,
-                ErrorResponse.class);
-
-        assertUnauthorized(getResult);
     }
 
     @Test
@@ -421,23 +318,6 @@ public class WeaponModuleTests {
                 WeaponResponse[].class);
         assertEquals(HttpStatus.OK, clientResult.getStatusCode());
         assertEquals(0, clientResult.getBody().length);
-    }
-
-    @Test
-    void weapon_getAvailable_unauthorizedError() {
-        var weaponDealer = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
-
-        var createWeapon = getCreateWeapon();
-
-        var createResult = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon",
-                weaponDealer,
-                createWeapon,
-                WeaponResponse.class);
-        assertEquals(HttpStatus.OK, createResult.getStatusCode());
-
-        var result = restTemplate.getForEntity("/api/weapon/available", ErrorResponse.class);
-        assertUnauthorized(result);
     }
 
     @Test
@@ -502,34 +382,7 @@ public class WeaponModuleTests {
                 i.getWeapon().getId().equals(result.getBody().getWeapon().getId())));
     }
 
-    @Test
-    void weapon_request_unauthorizedError() {
-        var weaponDealer = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
 
-        var createWeapon = getCreateWeapon();
-
-        var result = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon",
-                weaponDealer,
-                createWeapon,
-                WeaponResponse.class);
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-
-        var requestResult = restTemplate.postForEntity(
-                "/api/weapon/request/" + result.getBody().getWeapon().getId(),
-                null,
-                WeaponResponse.class);
-
-        assertUnauthorized(requestResult);
-    }
-
-    @Test
-    void weapon_getRequested_unauthorizedError() {
-
-        var result = restTemplate.getForEntity("/api/weapon/requested", ErrorResponse.class);
-
-        assertUnauthorized(result);
-    }
 
     @Test
     void weapon_buy() {
@@ -568,17 +421,6 @@ public class WeaponModuleTests {
                 i.getWeapon().getId().equals(result.getBody().getWeapon().getId())));
     }
 
-    @Test
-    void weapon_buy_unauthorizedError() {
-        var weaponRequest = new WeaponRequest("spb");
-
-        var result = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon/buy/123",
-                null,
-                weaponRequest,
-                ErrorResponse.class);
-        assertUnauthorized(result);
-    }
 
     @Test
     void weapon_buy_notFoundError() {
@@ -680,15 +522,6 @@ public class WeaponModuleTests {
                 i.getWeapon().getId().equals(result.getBody().getWeapon().getId())));
     }
 
-    @Test
-    void weapon_confirm_unauthorizedError() {
-
-        var result = restTemplate.postForEntity("/api/weapon/confirm/10",
-                null,
-                ErrorResponse.class);
-
-        assertUnauthorized(result);
-    }
 
     @Test
     void weapon_decline_fullProcess_fullErrors() {
@@ -756,15 +589,6 @@ public class WeaponModuleTests {
         assertEquals(0, stalkerGetAcquired.getBody().length);
     }
 
-    @Test
-    void weapon_decline_unauthorizedError() {
-        var result = restTemplate.postForEntity("/api/weapon/decline/10",
-                null,
-                ErrorResponse.class);
-
-        assertUnauthorized(result);
-    }
-
 
     @Test
     void weapon_suggest() {
@@ -805,15 +629,6 @@ public class WeaponModuleTests {
 
         assertOK(suggestResult);
         assertEquals(courier.getUser().getId(), suggestResult.getBody().getSuggestedCourier().getId());
-    }
-
-    @Test
-    void weapon_suggest_unauthorizedError() {
-        var result = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon/suggest",
-                null,
-                ErrorResponse.class);
-        assertUnauthorized(result);
     }
 
     @Test
@@ -930,14 +745,6 @@ public class WeaponModuleTests {
         assertEquals(StatusIds.Sent, acceptResult.getBody().getStatus().getId());
     }
 
-    @Test
-    void weapon_courier_accept_unauthorizedError() {
-        var result = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon/courier/accept/123",
-                null,
-                ErrorResponse.class);
-        assertUnauthorized(result);
-    }
 
     @Test
     void weapon_courier_accept_notFoundError() {
@@ -998,14 +805,6 @@ public class WeaponModuleTests {
         assertEquals(StatusIds.Acquired, declineResult.getBody().getStatus().getId());
     }
 
-    @Test
-    void weapon_courier_decline_unauthorizedError() {
-        var result = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon/courier/decline/123",
-                null,
-                ErrorResponse.class);
-        assertUnauthorized(result);
-    }
 
     @Test
     void weapon_courier_decline_notFoundError() {
@@ -1070,15 +869,6 @@ public class WeaponModuleTests {
                 WeaponResponse.class);
         assertOK(deliverResult);
         assertEquals(StatusIds.Delivered, deliverResult.getBody().getStatus().getId());
-    }
-
-    @Test
-    void weapon_courier_deliver_unauthorizedError() {
-        var result = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon/courier/deliver/123",
-                null,
-                ErrorResponse.class);
-        assertUnauthorized(result);
     }
 
     @Test
@@ -1169,58 +959,6 @@ public class WeaponModuleTests {
     private SuggestWeaponRequest getSuggestRequest(AuthResponse courier, WeaponResponse weaponResponse) {
 
         return new SuggestWeaponRequest(weaponResponse.getWeapon().getId(), courier.getUser().getId());
-    }
-
-    private void createValidationHelper(Consumer<CreateWeaponRequest> func) {
-        var user = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
-
-        var createWeapon = getCreateWeapon();
-        func.accept(createWeapon);
-        var result = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon",
-                user,
-                createWeapon,
-                ErrorResponse.class);
-
-        assertValidationError(result);
-    }
-
-    private void updateValidationHelper(Consumer<UpdateWeaponRequest> func) {
-        var user = TestUtil.registerRole(restTemplate, Role.WeaponDealer);
-        var createWeapon = getCreateWeapon();
-        var createResult = TestUtil.postAuthorized(restTemplate,
-                "/api/weapon",
-                user,
-                createWeapon,
-                WeaponResponse.class);
-
-        assertEquals(HttpStatus.OK, createResult.getStatusCode());
-
-        var updateRequest = getUpdateWeapon(createResult.getBody().getWeapon().getId());
-        func.accept(updateRequest);
-
-        var result = putAuthorized(restTemplate,
-                "/api/weapon",
-                user,
-                updateRequest,
-                ErrorResponse.class);
-
-        assertValidationError(result);
-    }
-
-    private CreateWeaponRequest getCreateWeapon() {
-        return new CreateWeaponRequest(
-                "title",
-                "description",
-                new BigDecimal(100));
-    }
-
-
-    private UpdateWeaponRequest getUpdateWeapon(Long id) {
-        return new UpdateWeaponRequest(id,
-                "newTitle",
-                "newDescription",
-                new BigDecimal(50));
     }
 
 }

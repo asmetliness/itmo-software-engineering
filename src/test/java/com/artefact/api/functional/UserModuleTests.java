@@ -1,13 +1,13 @@
-package com.artefact.api.user;
+package com.artefact.api.functional;
 
 
 import com.artefact.api.ApiApplication;
 import com.artefact.api.consts.Role;
+import com.artefact.api.utils.TestUtil;
 import com.artefact.api.model.User;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.UpdateUserRequest;
 import com.artefact.api.response.UserResponse;
-import com.artefact.api.utils.TestUtil;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -23,8 +23,6 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.io.IOException;
 
-import static com.artefact.api.utils.TestUtil.assertOK;
-import static com.artefact.api.utils.TestUtil.assertUnauthorized;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -59,12 +57,6 @@ public class UserModuleTests {
         Assertions.assertEquals(user.getUser().getId(), result.getBody().getUser().getId());
     }
 
-    @Test
-    void users_getCurrent_unauthorizedError() {
-
-        var result = restTemplate.getForEntity("/api/users/current", UserResponse.class);
-        assertUnauthorized(result);
-    }
 
     @Test
     void users_updateCurrent() {
@@ -90,21 +82,6 @@ public class UserModuleTests {
         Assertions.assertEquals(updateReq.getLastName(), result.getBody().getUser().getLastName());
         Assertions.assertEquals(updateReq.getMiddleName(), result.getBody().getUser().getMiddleName());
         Assertions.assertEquals(updateReq.getNickname(), result.getBody().getUser().getNickname());
-    }
-
-    @Test
-    void users_updateCurrent_unauthorizedError() {
-
-        var updateReq = new UpdateUserRequest(
-                "firstName",
-                "lastName",
-                "middleName",
-                "nickname"
-        );
-        var requestEntity = new HttpEntity<>(updateReq);
-        var result = restTemplate.exchange("/api/users/current", HttpMethod.PUT, requestEntity, UserResponse.class);
-
-        assertUnauthorized(result);
     }
 
 
@@ -135,11 +112,7 @@ public class UserModuleTests {
         Assertions.assertEquals(0, notHucksterResult.getBody().length);
     }
 
-    @Test
-    void users_getStalkers_unauthorizedError() {
-        var result = restTemplate.getForEntity("/api/users/stalkers", UserResponse.class);
-        assertUnauthorized(result);
-    }
+
 
     @Test
     void users_getCouriers() {
@@ -180,12 +153,6 @@ public class UserModuleTests {
         Assertions.assertEquals(0, clientResult.getBody().length);
     }
 
-    @Test
-    void users_getCouriers_unauthorizedError() {
-        var result = restTemplate.getForEntity("/api/users/couriers", UserResponse.class);
-        assertUnauthorized(result);
-    }
-
 
     @Test
     void user_uploadImage() throws IOException {
@@ -198,7 +165,7 @@ public class UserModuleTests {
                 file,
                 UserResponse.class);
 
-        assertOK(result);
+        TestUtil.assertOK(result);
         assertNotNull(result.getBody().getUser().getImagePath());
     }
 
@@ -210,7 +177,7 @@ public class UserModuleTests {
                 "/api/users/image/delete",
                 user,
                 UserResponse.class);
-        assertOK(result);
+        TestUtil.assertOK(result);
     }
 
     @Test
@@ -225,14 +192,14 @@ public class UserModuleTests {
                 file,
                 UserResponse.class);
 
-        assertOK(result);
+        TestUtil.assertOK(result);
         assertNotNull(result.getBody().getUser().getImagePath());
 
         var deleteResult = TestUtil.deleteAuthorized(restTemplate,
                 "/api/users/image/delete",
                 user,
                 UserResponse.class);
-        assertOK(deleteResult);
+        TestUtil.assertOK(deleteResult);
         assertNull(deleteResult.getBody().getUser().getImagePath());
     }
 

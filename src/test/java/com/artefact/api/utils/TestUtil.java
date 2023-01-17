@@ -1,10 +1,9 @@
 package com.artefact.api.utils;
 
 import com.artefact.api.consts.Role;
-import com.artefact.api.request.RegisterRequest;
+import com.artefact.api.request.*;
 import com.artefact.api.response.AuthResponse;
 import com.artefact.api.response.ErrorResponse;
-import org.apache.tomcat.util.http.fileupload.disk.DiskFileItem;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.io.ByteArrayResource;
@@ -12,13 +11,10 @@ import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ResourceUtils;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class TestUtil {
@@ -42,6 +38,30 @@ public class TestUtil {
         return createRegisterRequest(Role.Client);
     }
 
+    public static LoginRequest createLoginRequest() {
+        var email = UUID.randomUUID().toString() + "@mail.ru";
+        return  new LoginRequest(
+                email,
+                "password"
+        );
+    }
+
+    public static CreateInformationRequest getCreateInformation() {
+        return new CreateInformationRequest(
+                "title",
+                "description",
+                "information",
+                new BigDecimal(100));
+    }
+
+    public static UpdateInformationRequest getUpdateInformation(Long id) {
+        return new UpdateInformationRequest(id,
+                "newTitle",
+                "newDescription",
+                "newInformation",
+                new BigDecimal(50));
+    }
+
         public static RegisterRequest createRegisterRequest(Role role) {
 
         var email = UUID.randomUUID().toString() + "@mail.ru";
@@ -50,6 +70,20 @@ public class TestUtil {
                 "password",
                 role
         );
+    }
+
+    public static CreateWeaponRequest getCreateWeapon() {
+        return new CreateWeaponRequest(
+                "title",
+                "description",
+                new BigDecimal(100));
+    }
+
+    public static UpdateWeaponRequest getUpdateWeapon(Long id) {
+        return new UpdateWeaponRequest(id,
+                "newTitle",
+                "newDescription",
+                new BigDecimal(50));
     }
 
 

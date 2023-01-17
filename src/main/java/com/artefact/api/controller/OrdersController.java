@@ -166,7 +166,7 @@ public class OrdersController {
         if (role.equals(Role.Stalker)) {
             order.setAssignedUserId(user.getId());
             order.setSuggestedUserId(null);
-            order.setStatusId(StatusIds.AcceptedByStalker);
+            order.setStatusId(StatusIds.InProgress);
             //TESTED
             notificationRepository.save(new Notification(NotificationMessages.Order.AcceptedByStalker,
                     order.getAcceptedUserId(),
@@ -277,7 +277,8 @@ public class OrdersController {
 
         if(user.getRole().equals(Role.Stalker)) {
             return order.getStatusId().equals(StatusIds.AcceptedByHuckster) ||
-                    (order.getStatusId().equals(StatusIds.AcceptedByStalker)
+                    ((order.getStatusId().equals(StatusIds.AcceptedByStalker)
+                        || order.getStatusId().equals(StatusIds.InProgress))
                             && order.getAssignedUserId().equals(user.getId()));
         }
 

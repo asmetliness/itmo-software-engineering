@@ -7,6 +7,7 @@ import com.artefact.api.repository.NotificationRepository;
 import com.artefact.api.repository.UserRepository;
 import com.artefact.api.request.LoginRequest;
 import com.artefact.api.response.AuthResponse;
+import com.artefact.api.response.NewNotificationsResponse;
 import com.artefact.api.response.NotificationResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -21,6 +22,8 @@ import org.springframework.test.context.TestPropertySource;
 import com.artefact.api.utils.TestUtil;
 
 import static com.artefact.api.utils.TestUtil.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = ApiApplication.class,webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -49,6 +52,35 @@ public class NotificationModuleTests {
 
 
     @Test
+    void notifications_hasNew(){
+        var authInfo = register(restTemplate);
+        createNotification(authInfo, "test");
+
+        var checkHasNew = getAuthorized(
+                restTemplate,
+                "/api/notifications/new",
+                authInfo,
+                NewNotificationsResponse.class);
+        assertOK(checkHasNew);
+        assertTrue(checkHasNew.getBody().isHasNotifications());
+
+        var result = getAuthorized(
+                restTemplate,
+                "/api/notifications",
+                authInfo,
+                NotificationResponse[].class);
+        assertOK(result);
+
+        var checkHasNew2 = getAuthorized(
+                restTemplate,
+                "/api/notifications/new",
+                authInfo,
+                NewNotificationsResponse.class);
+        assertOK(checkHasNew2);
+        assertFalse(checkHasNew2.getBody().isHasNotifications());
+    }
+
+    @Test
     void notifications_wasRead() {
         var authInfo = register(restTemplate);
         var authInfo2 = register(restTemplate);
@@ -65,7 +97,7 @@ public class NotificationModuleTests {
         Assertions.assertNotNull(result.getBody());
         Assertions.assertEquals(1, result.getBody().length);
         Assertions.assertEquals("test", result.getBody()[0].getText());
-        Assertions.assertFalse(result.getBody()[0].isWasRead());
+        assertFalse(result.getBody()[0].isWasRead());
 
         var result2 = getAuthorized(
                 restTemplate,
@@ -73,7 +105,7 @@ public class NotificationModuleTests {
                 authInfo,
                 NotificationResponse[].class);
 
-        Assertions.assertTrue(result2.getBody()[0].isWasRead());
+        assertTrue(result2.getBody()[0].isWasRead());
 
         var result3 = getAuthorized(
                 restTemplate,

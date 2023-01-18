@@ -112,7 +112,7 @@ public class TestUtil {
             headers.add("Authorization" , "Bearer " + auth.getToken());
         }
 
-        HttpEntity<TRequest> entity = new HttpEntity(body, headers);
+        HttpEntity<TRequest> entity = new HttpEntity<>(body, headers);
 
         return restTemplate.exchange(url, HttpMethod.POST, entity, response);
     }
@@ -128,7 +128,7 @@ public class TestUtil {
             headers.add("Authorization" , "Bearer " + auth.getToken());
         }
 
-        HttpEntity entity = new HttpEntity(headers);
+        HttpEntity<Object> entity = new HttpEntity<Object>(headers);
 
         return restTemplate.exchange(url, HttpMethod.POST, entity, response);
     }
@@ -178,7 +178,7 @@ public class TestUtil {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization" , "Bearer " + auth.getToken());
 
-        HttpEntity<TRequest> entity = new HttpEntity(body, headers);
+        HttpEntity<TRequest> entity = new HttpEntity<>(body, headers);
 
         return restTemplate.exchange(url, HttpMethod.PUT, entity, response);
     }
@@ -194,7 +194,7 @@ public class TestUtil {
             headers.add("Authorization" , "Bearer " + auth.getToken());
         }
 
-        HttpEntity entity = new HttpEntity(headers);
+        HttpEntity<Object> entity = new HttpEntity<Object>(headers);
 
         return restTemplate.exchange(url, HttpMethod.GET, entity, response);
     }
@@ -208,7 +208,7 @@ public class TestUtil {
         HttpHeaders headers = new HttpHeaders();
         if(auth != null)   headers.add("Authorization" , "Bearer " + auth.getToken());
 
-        HttpEntity entity = new HttpEntity(headers);
+        HttpEntity<Object> entity = new HttpEntity<Object>(headers);
 
         return restTemplate.exchange(url, HttpMethod.DELETE, entity, response);
     }

@@ -37,4 +37,11 @@ public class NotificationModuleTests {
         var result = this.restTemplate.getForEntity("/api/notifications", NotificationResponse[].class);
         assertUnauthorized(result);
     }
+
+    @Test
+    void notification_getNew_unauthorizedError()
+    {
+        var result = this.restTemplate.getForEntity("/api/notifications/new", NotificationResponse[].class);
+        assertUnauthorized(result);
+    }
 }

@@ -766,7 +766,7 @@ public class OrderModuleTests {
                 stalker,
                 OrderResponse.class);
         assertOK(stalkerAcceptResult);
-        assertEquals(StatusIds.AcceptedByStalker, Objects.requireNonNull(stalkerAcceptResult.getBody()).getOrder().getStatusId());
+        assertEquals(StatusIds.InProgress, Objects.requireNonNull(stalkerAcceptResult.getBody()).getOrder().getStatusId());
         assertEquals(stalker.getUser().getId(), stalkerAcceptResult.getBody().getAssignedUser().getId());
         assertEquals(huckster.getUser().getId(), stalkerAcceptResult.getBody().getAcceptedUser().getId());
         assertNull(stalkerAcceptResult.getBody().getSuggestedUser());

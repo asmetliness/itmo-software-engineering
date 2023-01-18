@@ -631,8 +631,8 @@ public class OrderModuleTests {
                 "/api/orders/accept/" + result.getBody().getOrder().getId(),
                 stalker,
                 OrderResponse.class);
-        TestUtil.assertOK(stalkerAcceptResult);
-        assertEquals(StatusIds.AcceptedByStalker, Objects.requireNonNull(stalkerAcceptResult.getBody()).getOrder().getStatusId());
+        assertOK(stalkerAcceptResult);
+        assertEquals(StatusIds.InProgress, Objects.requireNonNull(stalkerAcceptResult.getBody()).getOrder().getStatusId());
         assertEquals(stalker.getUser().getId(), stalkerAcceptResult.getBody().getAssignedUser().getId());
         assertEquals(huckster.getUser().getId(), stalkerAcceptResult.getBody().getAcceptedUser().getId());
         assertNull(stalkerAcceptResult.getBody().getSuggestedUser());

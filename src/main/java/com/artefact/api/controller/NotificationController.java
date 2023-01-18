@@ -2,6 +2,7 @@ package com.artefact.api.controller;
 
 import com.artefact.api.repository.NotificationRepository;
 import com.artefact.api.response.InformationResponse;
+import com.artefact.api.response.NewNotificationsResponse;
 import com.artefact.api.response.NotificationResponse;
 import com.artefact.api.utils.Auth;
 import com.artefact.api.utils.Streams;
@@ -42,5 +43,16 @@ public class NotificationController {
         notificationRepository.saveAll(userNotifications);
 
         return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @GetMapping("/new")
+    @ApiResponses(value = { @ApiResponse(content = { @Content(schema = @Schema(implementation = NewNotificationsResponse.class))} ) })
+    public ResponseEntity<NewNotificationsResponse> checkNewNotifications() {
+        var userId = Auth.userId();
+        var userNotifications = notificationRepository.findByUserId(userId);
+
+        var hasNew = Streams.from(userNotifications).anyMatch(n -> !n.isWasRead());
+
+        return new ResponseEntity<>(new NewNotificationsResponse(hasNew), HttpStatus.OK);
     }
 }

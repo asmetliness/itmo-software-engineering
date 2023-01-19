@@ -42,6 +42,10 @@ public interface WeaponRepository extends JpaRepository<Weapon, Long> {
 
     String ByWeaponIdQuery = BaseQuery + " where weapon.id = :id";
 
+    String ByAcceptedCourier = BaseQuery + " where weapon.acceptedCourierId = :userId";
+
+    @Query(ByAcceptedCourier)
+    Iterable<IWeaponResult> findByAcceptedCourierId(@Param("userId") long userId);
     @Query(ByCreatedUserQuery)
     Iterable<IWeaponResult> findByCreatedUserId(@Param("userId") long userId);
 

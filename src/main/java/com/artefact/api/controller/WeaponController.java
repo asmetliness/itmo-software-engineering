@@ -124,6 +124,7 @@ public class WeaponController {
         var weapons = switch (user.getRole()) {
             case WeaponDealer -> weaponRepository.findByCreatedUserId(user.getId());
             case Stalker -> weaponRepository.findByAcquiredUserId(user.getId());
+            case Courier -> weaponRepository.findByAcceptedCourierId(userId);
             default -> new ArrayList<IWeaponResult>();
         };
 
